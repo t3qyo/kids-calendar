@@ -61,7 +61,7 @@ function DigitSlot({
     setProcessing(true);
     try {
       const raw = await fileToDataURL(file);
-      const processed = await removeWhiteBackground(raw, { threshold: 200, trim: true });
+      const processed = await removeWhiteBackground(raw, { trim: true });
       onPick(processed);
     } finally {
       setProcessing(false);

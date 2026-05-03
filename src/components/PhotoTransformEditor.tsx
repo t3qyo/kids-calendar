@@ -1,15 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
-import { DEFAULT_PHOTO_TRANSFORM, type PhotoTransform } from '@/lib/types';
+import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT, type PhotoTransform } from '@/lib/types';
 import { LAYOUT_SPECS } from './CalendarPage';
-
-const PHOTO_AREA_ASPECT: Record<string, number> = {
-  'desk-vertical': 1,
-  'desk-horizontal': 0.85,
-  wall: 1.25,
-};
 
 type Props = {
   month: number;
@@ -21,6 +15,12 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 export function PhotoTransformEditor({ month, open, onClose }: Props) {
   const photo = useCalendarStore((s) => s.monthPhotos[month]);
+  if (!open || !photo) return null;
+  // open のたびに draft を初期化させたいため、内側コンポーネントを open=true のときだけマウントする
+  return <Dialog month={month} photo={photo} onClose={onClose} />;
+}
+
+function Dialog({ month, photo, onClose }: { month: number; photo: string; onClose: () => void }) {
   const stored = useCalendarStore((s) => s.photoTransforms[month]);
   const layout = useCalendarStore((s) => s.layout);
   const setPhotoTransform = useCalendarStore((s) => s.setPhotoTransform);
@@ -29,12 +29,6 @@ export function PhotoTransformEditor({ month, open, onClose }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; startFocus: { x: number; y: number } } | null>(null);
-
-  useEffect(() => {
-    if (open) setDraft(stored ?? DEFAULT_PHOTO_TRANSFORM);
-  }, [open, stored]);
-
-  if (!open || !photo) return null;
 
   const computeFocusDelta = (dx: number, dy: number) => {
     const frame = frameRef.current;
@@ -87,8 +81,6 @@ export function PhotoTransformEditor({ month, open, onClose }: Props) {
   };
   const handleReset = () => setDraft(DEFAULT_PHOTO_TRANSFORM);
 
-  const aspect = PHOTO_AREA_ASPECT[layout] ?? 1;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -116,7 +108,7 @@ export function PhotoTransformEditor({ month, open, onClose }: Props) {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             className="relative w-full cursor-grab touch-none overflow-hidden rounded border border-gray-300 bg-gray-100 active:cursor-grabbing"
-            style={{ aspectRatio: aspect }}
+            style={{ aspectRatio: PHOTO_ASPECT }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

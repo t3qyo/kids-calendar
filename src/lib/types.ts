@@ -1,4 +1,11 @@
-export type LayoutType = 'desk-vertical' | 'desk-horizontal' | 'wall';
+export type LayoutType = 'desk-horizontal' | 'wall';
+
+/**
+ * 全レイアウト共通の写真エリア縦横比(横/縦)。
+ * 壁掛けレイアウトの写真寸法(111mm × 95.2mm)に合わせて 1.166 とし、
+ * 卓上横でも同じ比率で表示することで一度のクロップ調整で両レイアウトに使い回せる。
+ */
+export const PHOTO_ASPECT = 111 / 95.2;
 
 export type DigitImageMap = Partial<Record<0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9, string>>;
 

@@ -31,7 +31,7 @@ type Actions = {
 const initialState: State = {
   startYear: 2026,
   startMonth: 1,
-  layout: 'desk-vertical',
+  layout: 'wall',
   monthPhotos: {},
   photoTransforms: {},
   digitImages: {},

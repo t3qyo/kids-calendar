@@ -19,7 +19,7 @@ const kleeOne = Klee_One({
   weight: ["400", "600"],
 });
 
-const SITE_TITLE = "てがき風カレンダーメーカー";
+const SITE_TITLE = "てがき数字カレンダーメーカー";
 const SITE_DESCRIPTION =
   "子供の写真とお子さんの手書き数字で、世界に一つだけのオリジナルカレンダーをブラウザだけで作れます。";
 

@@ -15,7 +15,7 @@ export default function Home() {
       <ReloadWarning />
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          てがき風カレンダーメーカー
+          てがき数字カレンダーメーカー
         </h1>
         <p className="text-sm text-gray-600">
           子供の写真と手書きの数字で、世界に一つだけのオリジナルカレンダーをつくれます。

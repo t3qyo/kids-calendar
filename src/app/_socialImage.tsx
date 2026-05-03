@@ -48,7 +48,7 @@ export function SocialImageBody() {
           lineHeight: 1.1,
         }}
       >
-        <span>てがき風</span>
+        <span>てがき数字</span>
         <span>カレンダーメーカー</span>
       </div>
       <div style={{ marginTop: 28, fontSize: 28, color: '#4b5563', lineHeight: 1.4 }}>

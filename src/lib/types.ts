@@ -19,5 +19,4 @@ export type CalendarConfig = {
   layout: LayoutType;
   monthPhotos: MonthPhotoMap;
   digitImages: DigitImageMap;
-  useHandwrittenDigits: boolean;
 };

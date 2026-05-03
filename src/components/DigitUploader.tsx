@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
+import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile, removeWhiteBackground } from '@/lib/imageProcessing';
 
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
@@ -44,8 +45,8 @@ function DigitSlot({
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const beginProcessing = useCalendarStore((s) => s.beginProcessing);
-  const endProcessing = useCalendarStore((s) => s.endProcessing);
+  const beginProcessing = useProcessingStore((s) => s.begin);
+  const endProcessing = useProcessingStore((s) => s.end);
 
   const handleFile = async (file: File) => {
     setProcessing(true);

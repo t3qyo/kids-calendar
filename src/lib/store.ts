@@ -20,7 +20,6 @@ type State = {
   monthPhotos: MonthPhotoMap;
   photoTransforms: PhotoTransformMap;
   digitImages: DigitImageMap;
-  processingCount: number;
 };
 
 type Actions = {
@@ -31,8 +30,6 @@ type Actions = {
   setMonthPhoto: (month: number, dataUrl: string | undefined) => void;
   setPhotoTransform: (month: number, transform: PhotoTransform | undefined) => void;
   setDigitImage: (digit: number, dataUrl: string | undefined) => void;
-  beginProcessing: () => void;
-  endProcessing: () => void;
   reset: () => void;
 };
 
@@ -44,24 +41,41 @@ const initialState: State = {
   monthPhotos: {},
   photoTransforms: {},
   digitImages: {},
-  processingCount: 0,
 };
 
 /**
  * IndexedDB を zustand persist 用の StateStorage として使う薄いラッパー。
  * 写真 12 枚 × 数 MB が localStorage の容量制限(5-10MB)を超えるため、
  * 値はすべて IndexedDB に保存する。
+ *
+ * プライベートブラウズ・容量超過・ポリシーで IndexedDB が使えない環境では
+ * 例外を投げると rehydrate が失敗してアプリ起動自体が壊れるため、
+ * すべての操作を try/catch で包み graceful degradation する
+ * (= メモリ上の state だけで動く一時セッションになる)。
  */
 const indexedDbStorage: StateStorage = {
   getItem: async (name) => {
-    const value = await idbGet(name);
-    return typeof value === 'string' ? value : null;
+    try {
+      const value = await idbGet(name);
+      return typeof value === 'string' ? value : null;
+    } catch (err) {
+      console.warn('[kids-calendar] IndexedDB getItem failed', err);
+      return null;
+    }
   },
   setItem: async (name, value) => {
-    await idbSet(name, value);
+    try {
+      await idbSet(name, value);
+    } catch (err) {
+      console.warn('[kids-calendar] IndexedDB setItem failed', err);
+    }
   },
   removeItem: async (name) => {
-    await idbDel(name);
+    try {
+      await idbDel(name);
+    } catch (err) {
+      console.warn('[kids-calendar] IndexedDB removeItem failed', err);
+    }
   },
 };
 
@@ -105,16 +119,12 @@ export const useCalendarStore = create<State & Actions>()(
           }
           return { digitImages: next };
         }),
-      beginProcessing: () => set((state) => ({ processingCount: state.processingCount + 1 })),
-      endProcessing: () =>
-        set((state) => ({ processingCount: Math.max(0, state.processingCount - 1) })),
       reset: () => set(initialState),
     }),
     {
       name: 'kids-calendar-store',
       version: 1,
       storage: createJSONStorage(() => indexedDbStorage),
-      // processingCount は一時的なフラグなので永続化しない
       partialize: (state) => ({
         startYear: state.startYear,
         startMonth: state.startMonth,

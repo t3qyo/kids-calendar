@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kids Calendar Maker
 
-## Getting Started
+子供の写真と手書き数字でつくる、世界に一つだけのカレンダーWebアプリ。
 
-First, run the development server:
+## 機能
+
+- 12ヶ月分の写真アップロード（開始月・年は任意）
+- 子供の手書き数字（0〜9）を取り込んで日付に使用
+- 卓上縦・卓上横・壁かけの3レイアウト
+- 写真の表示範囲（位置・拡大率）の調整
+- PDF / PNG での出力
+
+## 開発
 
 ```bash
-npm run dev
-# or
+yarn install
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# http://localhost:3010
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## デプロイ
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| ブランチ | 環境 | URL |
+|---|---|---|
+| `main` | Production | https://kids-calendar-blue.vercel.app |
+| `develop` | Staging (Preview) | Vercelが自動発行 |
+| `feature/*` | 個別Preview | PR/ブランチごとに自動発行 |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### フロー
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+feature/xxx → develop (動作確認) → main (本番)
+```

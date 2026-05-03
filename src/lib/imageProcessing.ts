@@ -50,6 +50,59 @@ type RemoveWhiteBackgroundOptions = {
   trim?: boolean;
 };
 
+/**
+ * 指定された focus / zoom / 目標縦横比に従って写真をクロップしたデータURLを返す。
+ * html2canvas-pro が CSS の object-fit / object-position を正しく解釈しないため、
+ * あらかじめキャンバスでクロップしておくことで PDF / PNG 出力時もブラウザ表示と
+ * 同じクロップ・同じ画質を得る。
+ */
+export async function cropPhotoToDataURL(
+  src: string,
+  transform: { focusX: number; focusY: number; zoom: number },
+  targetAspect: number,
+): Promise<string> {
+  const img = await loadImage(src);
+  const sourceAspect = img.naturalWidth / img.naturalHeight;
+
+  // 1. cover behavior: 目標アスペクトに収まるよう source からクロップする最大領域を求める
+  let baseCropW: number;
+  let baseCropH: number;
+  if (sourceAspect > targetAspect) {
+    baseCropH = img.naturalHeight;
+    baseCropW = baseCropH * targetAspect;
+  } else {
+    baseCropW = img.naturalWidth;
+    baseCropH = baseCropW / targetAspect;
+  }
+
+  // 2. zoom: 表示倍率分だけクロップ領域を縮める
+  const zoom = Math.max(1, transform.zoom);
+  const cropW = baseCropW / zoom;
+  const cropH = baseCropH / zoom;
+
+  // 3. focus point: 残りオフセットを focus 比率で配分する
+  const maxOffsetX = Math.max(0, img.naturalWidth - cropW);
+  const maxOffsetY = Math.max(0, img.naturalHeight - cropH);
+  const sx = (maxOffsetX * transform.focusX) / 100;
+  const sy = (maxOffsetY * transform.focusY) / 100;
+
+  // 4. 印刷時の必要解像度を考慮した上で出力サイズを上限 2048px にキャップしてメモリを節約
+  const maxDim = 2048;
+  const scale = Math.min(1, maxDim / Math.max(cropW, cropH));
+  const targetW = Math.max(1, Math.round(cropW * scale));
+  const targetH = Math.max(1, Math.round(cropH * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas context not available');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+  return canvas.toDataURL('image/jpeg', 0.95);
+}
+
 export async function removeWhiteBackground(
   src: string,
   options: RemoveWhiteBackgroundOptions = {},

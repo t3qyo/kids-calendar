@@ -1,7 +1,8 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { buildMonthGrid, WEEKDAYS } from '@/lib/calendar';
+import { cropPhotoToDataURL } from '@/lib/imageProcessing';
 import type { LayoutType, PhotoTransform } from '@/lib/types';
 import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
 import { DateNumber } from './DateNumber';
@@ -81,30 +82,59 @@ function PhotoBox({
   transform: PhotoTransform;
   className?: string;
 }) {
-  if (photo) {
-    // background-image を使うのは html2canvas-pro が <img> の object-fit / object-position を
-    // 正しく解釈しないため。background-* なら PDF/PNG 出力でも崩れない。
+  if (!photo) {
     return (
-      <div className={`relative overflow-hidden ${className ?? ''}`}>
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${photo})`,
-            backgroundSize: 'cover',
-            backgroundPosition: `${transform.focusX}% ${transform.focusY}%`,
-            backgroundRepeat: 'no-repeat',
-            transform: `scale(${transform.zoom})`,
-            transformOrigin: `${transform.focusX}% ${transform.focusY}%`,
-          }}
-        />
+      <div className={`flex items-center justify-center bg-gray-100 text-xs text-gray-400 ${className ?? ''}`}>
+        写真未設定
       </div>
     );
   }
+  // photo の有無で別コンポーネントに分けることで、photo が消えたときは
+  // useCroppedPhoto を含む内側ごとアンマウントされ state がリセットされる。
+  return <CroppedPhotoBox photo={photo} transform={transform} className={className} />;
+}
+
+function CroppedPhotoBox({
+  photo,
+  transform,
+  className,
+}: {
+  photo: string;
+  transform: PhotoTransform;
+  className?: string;
+}) {
+  // html2canvas-pro が <img> の object-fit や background-image を正しく解釈しないため、
+  // あらかじめキャンバスでクロップしたデータURLを <img> に渡してそのまま全面表示する。
+  const cropped = useCroppedPhoto(photo, transform);
   return (
-    <div className={`flex items-center justify-center bg-gray-100 text-xs text-gray-400 ${className ?? ''}`}>
-      写真未設定
+    <div className={`relative overflow-hidden bg-gray-100 ${className ?? ''}`}>
+      {cropped && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={cropped} alt="" className="absolute inset-0 h-full w-full" />
+      )}
     </div>
   );
+}
+
+function useCroppedPhoto(photo: string, transform: PhotoTransform): string | undefined {
+  const [cropped, setCropped] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    cropPhotoToDataURL(photo, transform, PHOTO_ASPECT)
+      .then((src) => {
+        if (!cancelled) setCropped(src);
+      })
+      .catch(() => {
+        // ignore: クロップ失敗時は前のクロップを残しておく
+      });
+    return () => {
+      cancelled = true;
+    };
+    // transform は zustand の参照が安定しているため granular に分解せず依存に入れる
+  }, [photo, transform]);
+
+  return cropped;
 }
 
 /**

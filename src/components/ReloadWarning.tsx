@@ -1,15 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useCalendarStore } from '@/lib/store';
+import { useProcessingStore } from '@/lib/processingStore';
 
 export function ReloadWarning() {
-  const shouldWarn = useCalendarStore(
-    (s) =>
-      Object.keys(s.monthPhotos).length > 0 ||
-      Object.keys(s.digitImages).length > 0 ||
-      s.processingCount > 0,
-  );
+  // 写真や数字は IndexedDB に永続化されるためリロードしても消えない。
+  // 取り込み中(変換・キャンバス処理)の状態だけが本当に消える可能性があるので、
+  // その間だけ離脱を警告する。
+  const shouldWarn = useProcessingStore((s) => s.count > 0);
 
   useEffect(() => {
     if (!shouldWarn) return;

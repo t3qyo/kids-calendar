@@ -1,5 +1,21 @@
 import 'vitest-canvas-mock';
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+// jsdom には IndexedDB が無く idb-keyval は読み込み時に DB を開こうとして落ちるため、
+// テスト中は同 API を満たす in-memory 実装に差し替える。
+vi.mock('idb-keyval', () => {
+  const store = new Map<IDBValidKey, unknown>();
+  return {
+    get: async (key: IDBValidKey) => store.get(key),
+    set: async (key: IDBValidKey, value: unknown) => {
+      store.set(key, value);
+    },
+    del: async (key: IDBValidKey) => {
+      store.delete(key);
+    },
+  };
+});
 
 // jsdom の HTMLImageElement は実際のリソースをロードしないため、
 // プロトタイプの `src` setter を上書きして onload / onerror を即座に発火させる。

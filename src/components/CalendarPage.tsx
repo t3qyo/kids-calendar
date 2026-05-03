@@ -12,6 +12,12 @@ export type LayoutSpec = {
   label: string;
   widthMm: number;
   heightMm: number;
+  /**
+   * 両面印刷で裏面に次の月が来るレイアウト。PDF 出力時、偶数ページ (裏面) を
+   * 180° 回転させて配置することで、上端綴じ・下からめくった時に正しい向きで
+   * 次の月が見えるようにする。
+   */
+  doubleSided?: boolean;
 };
 
 export const LAYOUT_SPECS: Record<LayoutType, LayoutSpec> = {
@@ -26,6 +32,9 @@ export const LAYOUT_SPECS: Record<LayoutType, LayoutSpec> = {
     label: '壁かけ (12.7×25.4cm)',
     widthMm: 127,
     heightMm: 254,
+    // 上端綴じで下からめくる前提。両面印刷時は裏面 (偶数ページ) を 180° 回転して
+    // 配置することで、めくった瞬間に翌月が正しい向きで現れる。
+    doubleSided: true,
   },
 };
 

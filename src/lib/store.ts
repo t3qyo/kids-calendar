@@ -5,6 +5,7 @@ import type {
   DigitImageMap,
   LayoutType,
   MonthPhotoMap,
+  PaperSize,
   PhotoTransform,
   PhotoTransformMap,
 } from './types';
@@ -13,6 +14,7 @@ type State = {
   startYear: number;
   startMonth: number;
   layout: LayoutType;
+  paperSize: PaperSize;
   monthPhotos: MonthPhotoMap;
   photoTransforms: PhotoTransformMap;
   digitImages: DigitImageMap;
@@ -23,6 +25,7 @@ type Actions = {
   setStartYear: (year: number) => void;
   setStartMonth: (month: number) => void;
   setLayout: (layout: LayoutType) => void;
+  setPaperSize: (paperSize: PaperSize) => void;
   setMonthPhoto: (month: number, dataUrl: string | undefined) => void;
   setPhotoTransform: (month: number, transform: PhotoTransform | undefined) => void;
   setDigitImage: (digit: number, dataUrl: string | undefined) => void;
@@ -35,6 +38,7 @@ const initialState: State = {
   startYear: 2026,
   startMonth: 1,
   layout: 'wall',
+  paperSize: 'a4',
   monthPhotos: {},
   photoTransforms: {},
   digitImages: {},
@@ -46,6 +50,7 @@ export const useCalendarStore = create<State & Actions>((set) => ({
   setStartYear: (startYear) => set({ startYear }),
   setStartMonth: (startMonth) => set({ startMonth }),
   setLayout: (layout) => set({ layout }),
+  setPaperSize: (paperSize) => set({ paperSize }),
   setMonthPhoto: (month, dataUrl) =>
     set((state) => {
       const next = { ...state.monthPhotos };

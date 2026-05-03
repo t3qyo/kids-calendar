@@ -340,12 +340,12 @@ export async function removeWhiteBackground(
   // フォントの数字に近い余白を確保するため、トリム後にパディングを足す。
   // 通常は inkW/inkH それぞれの比率でパディングを付けるが、「1」のように細い数字は
   // inkW ベースだと水平余白が極端に小さくなり「11」が詰まって見えるため、
-  // 横パディングは padY の 0.7 倍を下限として確保する。
+  // 横パディングは padY の 0.9 倍を下限として確保する(以前 0.7 → 11 系がまだ詰まって見える指摘で +0.2)。
   // (これより大きい inkW * paddingRatio が出る数字 = 「2」以降は元の挙動を維持)
   const inkW = maxX - minX + 1;
   const inkH = maxY - minY + 1;
   const padY = Math.round(inkH * paddingRatio);
-  const padX = Math.max(Math.round(inkW * paddingRatio), Math.round(padY * 0.7));
+  const padX = Math.max(Math.round(inkW * paddingRatio), Math.round(padY * 0.9));
   const cropX = Math.max(0, minX - padX);
   const cropY = Math.max(0, minY - padY);
   const cropW = Math.min(width - cropX, inkW + padX * 2);

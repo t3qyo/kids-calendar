@@ -56,11 +56,18 @@ type SlotProps = {
 
 function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: SlotProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
-    const normalized = await normalizeImageFile(file);
-    const url = await fileToDataURL(normalized);
-    onPick(url);
+    setError(null);
+    try {
+      const normalized = await normalizeImageFile(file);
+      const url = await fileToDataURL(normalized);
+      onPick(url);
+    } catch (err) {
+      console.error(err);
+      setError('写真を読み込めませんでした。別の画像でお試しください。');
+    }
   };
 
   return (
@@ -146,6 +153,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
           </div>
         </div>
       ) : null}
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }

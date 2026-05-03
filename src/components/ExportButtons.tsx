@@ -11,6 +11,7 @@ export function ExportButtons() {
   const layout = useCalendarStore((s) => s.layout);
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const renderPage = async (key: string): Promise<HTMLCanvasElement> => {
     const html2canvas = (await import('html2canvas-pro')).default;
@@ -28,6 +29,7 @@ export function ExportButtons() {
 
   const exportPdf = async () => {
     setExporting(true);
+    setError(null);
     try {
       const { jsPDF } = await import('jspdf');
       const spec = LAYOUT_SPECS[layout];
@@ -46,6 +48,9 @@ export function ExportButtons() {
         pdf.addImage(imgData, 'JPEG', 0, 0, spec.widthMm, spec.heightMm, undefined, 'FAST');
       }
       pdf.save(`${fileBase}.pdf`);
+    } catch (err) {
+      console.error(err);
+      setError('PDFの書き出しに失敗しました。再度お試しください。');
     } finally {
       setExporting(false);
       setProgress(null);
@@ -54,6 +59,7 @@ export function ExportButtons() {
 
   const exportPng = async () => {
     setExporting(true);
+    setError(null);
     try {
       for (let i = 0; i < months.length; i++) {
         const { year, month } = months[i];
@@ -67,6 +73,9 @@ export function ExportButtons() {
         a.click();
         a.remove();
       }
+    } catch (err) {
+      console.error(err);
+      setError('PNGの書き出しに失敗しました。再度お試しください。');
     } finally {
       setExporting(false);
       setProgress(null);
@@ -74,28 +83,31 @@ export function ExportButtons() {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={exportPdf}
-        disabled={exporting}
-        className="rounded bg-gray-900 px-4 py-2 text-sm text-white shadow hover:bg-gray-800 disabled:opacity-50"
-      >
-        PDFで出力（12ヶ月）
-      </button>
-      <button
-        type="button"
-        onClick={exportPng}
-        disabled={exporting}
-        className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
-      >
-        PNGで個別ダウンロード
-      </button>
-      {progress && (
-        <span className="text-sm text-gray-600">
-          書き出し中 {progress.current} / {progress.total}
-        </span>
-      )}
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={exportPdf}
+          disabled={exporting}
+          className="rounded bg-gray-900 px-4 py-2 text-sm text-white shadow hover:bg-gray-800 disabled:opacity-50"
+        >
+          PDFで出力（12ヶ月）
+        </button>
+        <button
+          type="button"
+          onClick={exportPng}
+          disabled={exporting}
+          className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
+        >
+          PNGで個別ダウンロード
+        </button>
+        {progress && (
+          <span className="text-sm text-gray-600">
+            書き出し中 {progress.current} / {progress.total}
+          </span>
+        )}
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

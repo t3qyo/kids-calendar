@@ -43,14 +43,19 @@ function DigitSlot({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
     setProcessing(true);
+    setError(null);
     try {
       const normalized = await normalizeImageFile(file);
       const raw = await fileToDataURL(normalized);
       const processed = await removeWhiteBackground(raw, { trim: true });
       onPick(processed);
+    } catch (err) {
+      console.error(err);
+      setError('読み込みに失敗しました');
     } finally {
       setProcessing(false);
     }
@@ -93,6 +98,7 @@ function DigitSlot({
           消す
         </button>
       )}
+      {error && <p className="text-center text-[10px] text-red-600">{error}</p>}
     </div>
   );
 }

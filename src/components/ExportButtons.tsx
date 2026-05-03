@@ -12,6 +12,9 @@ const A4_HEIGHT_MM = 297;
 const CROP_MARK_LENGTH_MM = 4;
 const CROP_MARK_GAP_MM = 1;
 const CROP_MARK_LINE_WIDTH_MM = 0.1;
+// 卓上横を A4 1 枚に 2 ヶ月分縦並びで載せる時のカード間ギャップ。
+// ハサミで切り分ける余白として確保する。
+const TWO_UP_GAP_MM = 8;
 
 export function ExportButtons() {
   const startYear = useCalendarStore((s) => s.startYear);
@@ -70,24 +73,33 @@ export function ExportButtons() {
       const pageW = useA4 ? A4_WIDTH_MM : spec.widthMm;
       const pageH = useA4 ? A4_HEIGHT_MM : spec.heightMm;
       const orientation = pageW >= pageH ? 'landscape' : 'portrait';
-      const offsetX = useA4 ? (pageW - spec.widthMm) / 2 : 0;
-      const offsetY = useA4 ? (pageH - spec.heightMm) / 2 : 0;
+
+      // 卓上横 (144x86mm) は A4 縦に縦並びで 2 ヶ月分載せられるので 2-up にする。
+      // それ以外(壁掛け / exact 用紙)は従来通り 1 ヶ月 / ページ。
+      const cardsPerPage = layout === 'desk-horizontal' && useA4 ? 2 : 1;
+      const cardPositions = computeCardPositions(cardsPerPage, pageW, pageH, spec.widthMm, spec.heightMm);
 
       const pdf = new jsPDF({ unit: 'mm', format: [pageW, pageH], orientation });
 
-      for (let i = 0; i < months.length; i++) {
-        const { year, month } = months[i];
-        setProgress({ current: i + 1, total: months.length });
-        let canvas = await renderPage(`${year}-${month}`);
-        // 両面前提のレイアウトでは、裏面 (偶数 index = 2,4,6...) を 180° 回転して
-        // 配置する。上端綴じで下からめくると正しい向きで次の月が現れるようにするため。
-        if (spec.doubleSided && i % 2 === 1) {
-          canvas = rotateCanvas180(canvas);
+      const totalPages = Math.ceil(months.length / cardsPerPage);
+      for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+        if (pageIdx > 0) pdf.addPage([pageW, pageH], orientation);
+        for (let slot = 0; slot < cardsPerPage; slot++) {
+          const monthIdx = pageIdx * cardsPerPage + slot;
+          if (monthIdx >= months.length) break;
+          const { year, month } = months[monthIdx];
+          setProgress({ current: monthIdx + 1, total: months.length });
+          let canvas = await renderPage(`${year}-${month}`);
+          // 両面前提のレイアウトでは、裏面 (偶数 index = 2,4,6...) を 180° 回転して
+          // 配置する。上端綴じで下からめくると正しい向きで次の月が現れるようにするため。
+          if (spec.doubleSided && monthIdx % 2 === 1) {
+            canvas = rotateCanvas180(canvas);
+          }
+          const imgData = canvas.toDataURL('image/jpeg', 0.92);
+          const { x, y } = cardPositions[slot];
+          pdf.addImage(imgData, 'JPEG', x, y, spec.widthMm, spec.heightMm, undefined, 'FAST');
+          if (useA4) drawCropMarks(pdf, x, y, spec.widthMm, spec.heightMm);
         }
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        if (i > 0) pdf.addPage([pageW, pageH], orientation);
-        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, spec.widthMm, spec.heightMm, undefined, 'FAST');
-        if (useA4) drawCropMarks(pdf, offsetX, offsetY, spec.widthMm, spec.heightMm);
       }
       pdf.save(`${fileBase}.pdf`);
     } catch (err) {
@@ -152,7 +164,11 @@ export function ExportButtons() {
           </span>
         )}
       </div>
-      <PrintHint paperSize={paperSize} doubleSided={spec.doubleSided ?? false} />
+      <PrintHint
+        paperSize={paperSize}
+        doubleSided={spec.doubleSided ?? false}
+        twoUp={layout === 'desk-horizontal' && paperSize === 'a4'}
+      />
 
       <p role="alert" aria-live="polite" className="text-sm text-red-600 empty:hidden">
         {error}
@@ -196,11 +212,22 @@ function truncate(value: string, max = 80): string {
   return value.length > max ? `${value.slice(0, max)}…` : value;
 }
 
-function PrintHint({ paperSize, doubleSided }: { paperSize: 'a4' | 'exact'; doubleSided: boolean }) {
+function PrintHint({
+  paperSize,
+  doubleSided,
+  twoUp,
+}: {
+  paperSize: 'a4' | 'exact';
+  doubleSided: boolean;
+  twoUp: boolean;
+}) {
   const items: string[] = [];
   if (paperSize === 'a4') {
     items.push('用紙: A4 / 倍率: 100% (実際のサイズ・原寸大)');
-    items.push('印刷後、四隅のトンボ (切り取り線) に沿って切り抜く');
+    if (twoUp) {
+      items.push('A4 1 枚に 2 ヶ月分が縦並びで配置されます (計 6 枚)');
+    }
+    items.push('印刷後、各カードの四隅のトンボ (切り取り線) に沿って切り抜く');
   } else {
     items.push('用紙: PDF と同じサイズ / 倍率: 100% (実際のサイズ・原寸大)');
   }
@@ -219,6 +246,31 @@ function PrintHint({ paperSize, doubleSided }: { paperSize: 'a4' | 'exact'; doub
       </ul>
     </div>
   );
+}
+
+/**
+ * ページ内に配置する各カードの左上座標を計算する。
+ * cardsPerPage=1: 中央 1 枚。
+ * cardsPerPage=2: 縦並び 2 枚で、ハサミで切り分けられるよう間に TWO_UP_GAP_MM のギャップ。
+ */
+function computeCardPositions(
+  cardsPerPage: number,
+  pageW: number,
+  pageH: number,
+  cardW: number,
+  cardH: number,
+): { x: number; y: number }[] {
+  const x = (pageW - cardW) / 2;
+  if (cardsPerPage === 1) {
+    return [{ x, y: (pageH - cardH) / 2 }];
+  }
+  // 2-up: 縦並び
+  const totalH = cardH * cardsPerPage + TWO_UP_GAP_MM * (cardsPerPage - 1);
+  const topMargin = (pageH - totalH) / 2;
+  return Array.from({ length: cardsPerPage }, (_, i) => ({
+    x,
+    y: topMargin + i * (cardH + TWO_UP_GAP_MM),
+  }));
 }
 
 function rotateCanvas180(source: HTMLCanvasElement): HTMLCanvasElement {

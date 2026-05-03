@@ -7,10 +7,17 @@ import { cropPhotoCached } from '@/lib/imageProcessing';
 import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
 import { LAYOUT_SPECS } from './CalendarPage';
 
+const A4_WIDTH_MM = 210;
+const A4_HEIGHT_MM = 297;
+const CROP_MARK_LENGTH_MM = 4;
+const CROP_MARK_GAP_MM = 1;
+const CROP_MARK_LINE_WIDTH_MM = 0.1;
+
 export function ExportButtons() {
   const startYear = useCalendarStore((s) => s.startYear);
   const startMonth = useCalendarStore((s) => s.startMonth);
   const layout = useCalendarStore((s) => s.layout);
+  const paperSize = useCalendarStore((s) => s.paperSize);
   const monthPhotos = useCalendarStore((s) => s.monthPhotos);
   const photoTransforms = useCalendarStore((s) => s.photoTransforms);
   const [exporting, setExporting] = useState(false);
@@ -57,19 +64,30 @@ export function ExportButtons() {
       await warmCropCache();
       const { jsPDF } = await import('jspdf');
       const spec = LAYOUT_SPECS[layout];
-      const orientation = spec.widthMm >= spec.heightMm ? 'landscape' : 'portrait';
-      const pdf = new jsPDF({
-        unit: 'mm',
-        format: [spec.widthMm, spec.heightMm],
-        orientation,
-      });
+
+      // 用紙サイズ。a4 はレイアウトを A4 中央に配置 + トンボ。exact はレイアウト実寸そのまま。
+      const useA4 = paperSize === 'a4';
+      const pageW = useA4 ? A4_WIDTH_MM : spec.widthMm;
+      const pageH = useA4 ? A4_HEIGHT_MM : spec.heightMm;
+      const orientation = pageW >= pageH ? 'landscape' : 'portrait';
+      const offsetX = useA4 ? (pageW - spec.widthMm) / 2 : 0;
+      const offsetY = useA4 ? (pageH - spec.heightMm) / 2 : 0;
+
+      const pdf = new jsPDF({ unit: 'mm', format: [pageW, pageH], orientation });
+
       for (let i = 0; i < months.length; i++) {
         const { year, month } = months[i];
         setProgress({ current: i + 1, total: months.length });
-        const canvas = await renderPage(`${year}-${month}`);
+        let canvas = await renderPage(`${year}-${month}`);
+        // 両面前提のレイアウトでは、裏面 (偶数 index = 2,4,6...) を 180° 回転して
+        // 配置する。上端綴じで下からめくると正しい向きで次の月が現れるようにするため。
+        if (spec.doubleSided && i % 2 === 1) {
+          canvas = rotateCanvas180(canvas);
+        }
         const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        if (i > 0) pdf.addPage([spec.widthMm, spec.heightMm], orientation);
-        pdf.addImage(imgData, 'JPEG', 0, 0, spec.widthMm, spec.heightMm, undefined, 'FAST');
+        if (i > 0) pdf.addPage([pageW, pageH], orientation);
+        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, spec.widthMm, spec.heightMm, undefined, 'FAST');
+        if (useA4) drawCropMarks(pdf, offsetX, offsetY, spec.widthMm, spec.heightMm);
       }
       pdf.save(`${fileBase}.pdf`);
     } catch (err) {
@@ -107,6 +125,8 @@ export function ExportButtons() {
     }
   };
 
+  const spec = LAYOUT_SPECS[layout];
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -132,6 +152,8 @@ export function ExportButtons() {
           </span>
         )}
       </div>
+      <PrintHint paperSize={paperSize} doubleSided={spec.doubleSided ?? false} />
+
       <p role="alert" aria-live="polite" className="text-sm text-red-600 empty:hidden">
         {error}
       </p>
@@ -172,4 +194,72 @@ async function waitForImagesLoaded(node: HTMLElement): Promise<void> {
 
 function truncate(value: string, max = 80): string {
   return value.length > max ? `${value.slice(0, max)}…` : value;
+}
+
+function PrintHint({ paperSize, doubleSided }: { paperSize: 'a4' | 'exact'; doubleSided: boolean }) {
+  const items: string[] = [];
+  if (paperSize === 'a4') {
+    items.push('用紙: A4 / 倍率: 100% (実際のサイズ・原寸大)');
+    items.push('印刷後、四隅のトンボ (切り取り線) に沿って切り抜く');
+  } else {
+    items.push('用紙: PDF と同じサイズ / 倍率: 100% (実際のサイズ・原寸大)');
+  }
+  if (doubleSided) {
+    items.push('両面印刷: 長辺とじ');
+    items.push('印刷後、用紙の上端を綴じる (パンチ穴 + 紐 / クリップなど)');
+    items.push('下端からめくると、裏面に翌月が正しい向きで現れます');
+  }
+  return (
+    <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+      <p className="font-medium">印刷設定</p>
+      <ul className="mt-1 list-disc pl-4 space-y-0.5">
+        {items.map((it) => (
+          <li key={it}>{it}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function rotateCanvas180(source: HTMLCanvasElement): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = source.width;
+  out.height = source.height;
+  const ctx = out.getContext('2d');
+  if (!ctx) throw new Error('Canvas context not available');
+  ctx.translate(source.width, source.height);
+  ctx.rotate(Math.PI);
+  ctx.drawImage(source, 0, 0);
+  return out;
+}
+
+/**
+ * A4 用紙にレイアウトを中央配置したときの 4 隅に、切り取り位置を示すトンボ
+ * (corner crop marks) を描く。線がレイアウト本体に被らないよう、辺から
+ * CROP_MARK_GAP_MM だけ外側に L 字を引く。
+ */
+function drawCropMarks(
+  // jsPDF の型を直接 import すると非同期 import の意味が薄れるので緩めの型で受ける
+  pdf: { setLineWidth: (w: number) => void; setDrawColor: (g: number) => void; line: (x1: number, y1: number, x2: number, y2: number) => void },
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  pdf.setLineWidth(CROP_MARK_LINE_WIDTH_MM);
+  pdf.setDrawColor(150);
+  const len = CROP_MARK_LENGTH_MM;
+  const gap = CROP_MARK_GAP_MM;
+  // top-left
+  pdf.line(x - gap - len, y, x - gap, y);
+  pdf.line(x, y - gap - len, x, y - gap);
+  // top-right
+  pdf.line(x + w + gap, y, x + w + gap + len, y);
+  pdf.line(x + w, y - gap - len, x + w, y - gap);
+  // bottom-left
+  pdf.line(x - gap - len, y + h, x - gap, y + h);
+  pdf.line(x, y + h + gap, x, y + h + gap + len);
+  // bottom-right
+  pdf.line(x + w + gap, y + h, x + w + gap + len, y + h);
+  pdf.line(x + w, y + h + gap, x + w, y + h + gap + len);
 }

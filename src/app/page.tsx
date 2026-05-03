@@ -4,6 +4,7 @@ import { ExportButtons } from '@/components/ExportButtons';
 import { ExportRenderArea } from '@/components/ExportRenderArea';
 import { LayoutSelector } from '@/components/LayoutSelector';
 import { MonthPhotoUploader } from '@/components/MonthPhotoUploader';
+import { PaperSizeSelector } from '@/components/PaperSizeSelector';
 import { ReloadWarning } from '@/components/ReloadWarning';
 import { StartMonthSelector } from '@/components/StartMonthSelector';
 
@@ -52,9 +53,15 @@ export default function Home() {
       </Section>
 
       <Section step="6" title="出力">
-        <ExportButtons />
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-sm text-gray-600">印刷用紙</p>
+            <PaperSizeSelector />
+          </div>
+          <ExportButtons />
+        </div>
         <p className="mt-2 text-xs text-gray-500">
-          ※ PDFは12ヶ月分が1ファイルに収まります。印刷時はサイズに合わせた用紙設定でどうぞ。
+          ※ PDFは12ヶ月分が1ファイルに収まります。
         </p>
       </Section>
 

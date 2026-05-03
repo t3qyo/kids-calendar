@@ -4,7 +4,8 @@ import { create } from 'zustand';
 import type { DigitImageMap, LayoutType, MonthPhotoMap } from './types';
 
 type State = {
-  year: number;
+  startYear: number;
+  startMonth: number;
   layout: LayoutType;
   monthPhotos: MonthPhotoMap;
   digitImages: DigitImageMap;
@@ -12,7 +13,8 @@ type State = {
 };
 
 type Actions = {
-  setYear: (year: number) => void;
+  setStartYear: (year: number) => void;
+  setStartMonth: (month: number) => void;
   setLayout: (layout: LayoutType) => void;
   setMonthPhoto: (month: number, dataUrl: string | undefined) => void;
   setDigitImage: (digit: number, dataUrl: string | undefined) => void;
@@ -21,7 +23,8 @@ type Actions = {
 };
 
 const initialState: State = {
-  year: 2026,
+  startYear: 2026,
+  startMonth: 1,
   layout: 'desk-vertical',
   monthPhotos: {},
   digitImages: {},
@@ -30,7 +33,8 @@ const initialState: State = {
 
 export const useCalendarStore = create<State & Actions>((set) => ({
   ...initialState,
-  setYear: (year) => set({ year }),
+  setStartYear: (startYear) => set({ startYear }),
+  setStartMonth: (startMonth) => set({ startMonth }),
   setLayout: (layout) => set({ layout }),
   setMonthPhoto: (month, dataUrl) =>
     set((state) => {

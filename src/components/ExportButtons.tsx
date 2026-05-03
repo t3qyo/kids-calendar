@@ -2,25 +2,29 @@
 
 import { useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
-import { MONTHS } from '@/lib/calendar';
+import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { LAYOUT_SPECS } from './CalendarPage';
 
 export function ExportButtons() {
-  const year = useCalendarStore((s) => s.year);
+  const startYear = useCalendarStore((s) => s.startYear);
+  const startMonth = useCalendarStore((s) => s.startMonth);
   const layout = useCalendarStore((s) => s.layout);
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
 
-  const renderPage = async (month: number): Promise<HTMLCanvasElement> => {
+  const renderPage = async (key: string): Promise<HTMLCanvasElement> => {
     const html2canvas = (await import('html2canvas-pro')).default;
-    const node = document.querySelector<HTMLElement>(`[data-export-page="${month}"]`);
-    if (!node) throw new Error(`page ${month} not found`);
+    const node = document.querySelector<HTMLElement>(`[data-export-page="${key}"]`);
+    if (!node) throw new Error(`page ${key} not found`);
     return html2canvas(node, {
       scale: 3,
       backgroundColor: '#ffffff',
       useCORS: true,
     });
   };
+
+  const months = getTwelveMonthsFrom(startYear, startMonth);
+  const fileBase = `kids-calendar-${startYear}-${String(startMonth).padStart(2, '0')}`;
 
   const exportPdf = async () => {
     setExporting(true);
@@ -33,15 +37,15 @@ export function ExportButtons() {
         format: [spec.widthMm, spec.heightMm],
         orientation,
       });
-      for (let i = 0; i < MONTHS.length; i++) {
-        const m = MONTHS[i];
-        setProgress({ current: i + 1, total: MONTHS.length });
-        const canvas = await renderPage(m);
+      for (let i = 0; i < months.length; i++) {
+        const { year, month } = months[i];
+        setProgress({ current: i + 1, total: months.length });
+        const canvas = await renderPage(`${year}-${month}`);
         const imgData = canvas.toDataURL('image/jpeg', 0.92);
         if (i > 0) pdf.addPage([spec.widthMm, spec.heightMm], orientation);
         pdf.addImage(imgData, 'JPEG', 0, 0, spec.widthMm, spec.heightMm, undefined, 'FAST');
       }
-      pdf.save(`kids-calendar-${year}.pdf`);
+      pdf.save(`${fileBase}.pdf`);
     } finally {
       setExporting(false);
       setProgress(null);
@@ -51,14 +55,14 @@ export function ExportButtons() {
   const exportPng = async () => {
     setExporting(true);
     try {
-      for (let i = 0; i < MONTHS.length; i++) {
-        const m = MONTHS[i];
-        setProgress({ current: i + 1, total: MONTHS.length });
-        const canvas = await renderPage(m);
+      for (let i = 0; i < months.length; i++) {
+        const { year, month } = months[i];
+        setProgress({ current: i + 1, total: months.length });
+        const canvas = await renderPage(`${year}-${month}`);
         const url = canvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = url;
-        a.download = `kids-calendar-${year}-${String(m).padStart(2, '0')}.png`;
+        a.download = `${fileBase}-${String(i + 1).padStart(2, '0')}-${year}${String(month).padStart(2, '0')}.png`;
         document.body.appendChild(a);
         a.click();
         a.remove();

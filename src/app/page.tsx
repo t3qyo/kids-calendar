@@ -4,6 +4,7 @@ import { ExportButtons } from '@/components/ExportButtons';
 import { ExportRenderArea } from '@/components/ExportRenderArea';
 import { LayoutSelector } from '@/components/LayoutSelector';
 import { MonthPhotoUploader } from '@/components/MonthPhotoUploader';
+import { StartMonthSelector } from '@/components/StartMonthSelector';
 
 export default function Home() {
   return (
@@ -13,35 +14,39 @@ export default function Home() {
           Kids Calendar Maker
         </h1>
         <p className="text-sm text-gray-600">
-          子供の写真と手書きの数字で、世界に一つだけの2026年カレンダーをつくれます。
+          子供の写真と手書きの数字で、世界に一つだけのオリジナルカレンダーをつくれます。
         </p>
       </header>
 
+      <Section step="1" title="開始月を選ぶ" description="開始月から12ヶ月分のカレンダーを作成します。">
+        <StartMonthSelector />
+      </Section>
+
       <Section
-        step="1"
+        step="2"
         title="月ごとの写真をアップロード"
-        description="1月〜12月の写真を選択してください。各月の四角をクリックまたはドラッグ&ドロップで写真を設定できます。"
+        description="各月の四角をクリックまたはドラッグ&ドロップで写真を設定できます。"
       >
         <MonthPhotoUploader />
       </Section>
 
       <Section
-        step="2"
+        step="3"
         title="手書き数字を使う（任意）"
         description="お子さんが書いた0〜9の数字写真を取り込むと、日付がオリジナルの手書きになります。10種類すべて揃っていない場合は通常のフォントが使われます。"
       >
         <DigitUploader />
       </Section>
 
-      <Section step="3" title="レイアウトを選ぶ">
+      <Section step="4" title="レイアウトを選ぶ">
         <LayoutSelector />
       </Section>
 
-      <Section step="4" title="プレビュー（2026年 1〜12月）">
+      <Section step="5" title="プレビュー">
         <CalendarPreview />
       </Section>
 
-      <Section step="5" title="出力">
+      <Section step="6" title="出力">
         <ExportButtons />
         <p className="mt-2 text-xs text-gray-500">
           ※ PDFは12ヶ月分が1ファイルに収まります。印刷時はサイズに合わせた用紙設定でどうぞ。

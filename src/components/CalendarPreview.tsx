@@ -2,23 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
-import { MONTHS } from '@/lib/calendar';
+import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { CalendarPage, LAYOUT_SPECS } from './CalendarPage';
 
 export function CalendarPreview() {
-  const year = useCalendarStore((s) => s.year);
+  const startYear = useCalendarStore((s) => s.startYear);
+  const startMonth = useCalendarStore((s) => s.startMonth);
   const layout = useCalendarStore((s) => s.layout);
   const monthPhotos = useCalendarStore((s) => s.monthPhotos);
+  const months = getTwelveMonthsFrom(startYear, startMonth);
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {MONTHS.map((m) => (
-        <PreviewCard key={m}>
+      {months.map(({ year, month }) => (
+        <PreviewCard key={`${year}-${month}`}>
           <CalendarPage
             year={year}
-            month={m}
+            month={month}
             layout={layout}
-            photo={monthPhotos[m]}
+            photo={monthPhotos[month]}
           />
         </PreviewCard>
       ))}

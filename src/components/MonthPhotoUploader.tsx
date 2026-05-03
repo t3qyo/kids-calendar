@@ -3,21 +3,25 @@
 import { useRef } from 'react';
 import { useCalendarStore } from '@/lib/store';
 import { fileToDataURL } from '@/lib/imageProcessing';
-import { MONTHS } from '@/lib/calendar';
+import { getTwelveMonthsFrom } from '@/lib/calendar';
 
 export function MonthPhotoUploader() {
+  const startYear = useCalendarStore((s) => s.startYear);
+  const startMonth = useCalendarStore((s) => s.startMonth);
   const monthPhotos = useCalendarStore((s) => s.monthPhotos);
   const setMonthPhoto = useCalendarStore((s) => s.setMonthPhoto);
+  const months = getTwelveMonthsFrom(startYear, startMonth);
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-      {MONTHS.map((m) => (
+      {months.map(({ year, month }) => (
         <MonthSlot
-          key={m}
-          month={m}
-          photo={monthPhotos[m]}
-          onPick={(url) => setMonthPhoto(m, url)}
-          onClear={() => setMonthPhoto(m, undefined)}
+          key={`${year}-${month}`}
+          year={year}
+          month={month}
+          photo={monthPhotos[month]}
+          onPick={(url) => setMonthPhoto(month, url)}
+          onClear={() => setMonthPhoto(month, undefined)}
         />
       ))}
     </div>
@@ -25,11 +29,13 @@ export function MonthPhotoUploader() {
 }
 
 function MonthSlot({
+  year,
   month,
   photo,
   onPick,
   onClear,
 }: {
+  year: number;
   month: number;
   photo: string | undefined;
   onPick: (dataUrl: string) => void;
@@ -44,7 +50,9 @@ function MonthSlot({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-xs font-medium text-gray-600">{month}月</div>
+      <div className="text-xs font-medium text-gray-600">
+        {year}年{month}月
+      </div>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -60,7 +68,7 @@ function MonthSlot({
       >
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt={`${month}月`} className="h-full w-full object-cover" />
+          <img src={photo} alt={`${year}年${month}月`} className="h-full w-full object-cover" />
         ) : (
           <span>写真を選択</span>
         )}

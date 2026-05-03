@@ -1,13 +1,15 @@
 'use client';
 
 import { useCalendarStore } from '@/lib/store';
-import { MONTHS } from '@/lib/calendar';
+import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { CalendarPage } from './CalendarPage';
 
 export function ExportRenderArea() {
-  const year = useCalendarStore((s) => s.year);
+  const startYear = useCalendarStore((s) => s.startYear);
+  const startMonth = useCalendarStore((s) => s.startMonth);
   const layout = useCalendarStore((s) => s.layout);
   const monthPhotos = useCalendarStore((s) => s.monthPhotos);
+  const months = getTwelveMonthsFrom(startYear, startMonth);
 
   return (
     <div
@@ -19,11 +21,14 @@ export function ExportRenderArea() {
         pointerEvents: 'none',
       }}
     >
-      {MONTHS.map((m) => (
-        <div key={m} data-export-page={m}>
-          <CalendarPage year={year} month={m} layout={layout} photo={monthPhotos[m]} />
-        </div>
-      ))}
+      {months.map(({ year, month }) => {
+        const key = `${year}-${month}`;
+        return (
+          <div key={key} data-export-page={key}>
+            <CalendarPage year={year} month={month} layout={layout} photo={monthPhotos[month]} />
+          </div>
+        );
+      })}
     </div>
   );
 }

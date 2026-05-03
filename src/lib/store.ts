@@ -16,6 +16,7 @@ type State = {
   monthPhotos: MonthPhotoMap;
   photoTransforms: PhotoTransformMap;
   digitImages: DigitImageMap;
+  processingCount: number;
 };
 
 type Actions = {
@@ -25,16 +26,19 @@ type Actions = {
   setMonthPhoto: (month: number, dataUrl: string | undefined) => void;
   setPhotoTransform: (month: number, transform: PhotoTransform | undefined) => void;
   setDigitImage: (digit: number, dataUrl: string | undefined) => void;
+  beginProcessing: () => void;
+  endProcessing: () => void;
   reset: () => void;
 };
 
 const initialState: State = {
   startYear: 2026,
   startMonth: 1,
-  layout: 'desk-vertical',
+  layout: 'wall',
   monthPhotos: {},
   photoTransforms: {},
   digitImages: {},
+  processingCount: 0,
 };
 
 export const useCalendarStore = create<State & Actions>((set) => ({
@@ -74,5 +78,8 @@ export const useCalendarStore = create<State & Actions>((set) => ({
       }
       return { digitImages: next };
     }),
+  beginProcessing: () => set((state) => ({ processingCount: state.processingCount + 1 })),
+  endProcessing: () =>
+    set((state) => ({ processingCount: Math.max(0, state.processingCount - 1) })),
   reset: () => set(initialState),
 }));

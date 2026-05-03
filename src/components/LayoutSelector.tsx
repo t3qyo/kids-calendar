@@ -4,7 +4,7 @@ import { useCalendarStore } from '@/lib/store';
 import { LAYOUT_SPECS } from './CalendarPage';
 import type { LayoutType } from '@/lib/types';
 
-const LAYOUTS: LayoutType[] = ['desk-vertical', 'desk-horizontal', 'wall'];
+const LAYOUTS: LayoutType[] = ['desk-horizontal', 'wall'];
 
 export function LayoutSelector() {
   const layout = useCalendarStore((s) => s.layout);

@@ -56,11 +56,26 @@ type SlotProps = {
 
 function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: SlotProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const beginProcessing = useCalendarStore((s) => s.beginProcessing);
+  const endProcessing = useCalendarStore((s) => s.endProcessing);
 
   const handleFile = async (file: File) => {
-    const normalized = await normalizeImageFile(file);
-    const url = await fileToDataURL(normalized);
-    onPick(url);
+    setProcessing(true);
+    setError(null);
+    beginProcessing();
+    try {
+      const normalized = await normalizeImageFile(file);
+      const url = await fileToDataURL(normalized);
+      onPick(url);
+    } catch (err) {
+      console.error(err);
+      setError('写真を読み込めませんでした。別の画像でお試しください。');
+    } finally {
+      setProcessing(false);
+      endProcessing();
+    }
   };
 
   return (
@@ -98,6 +113,10 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
               範囲を調整
             </button>
           </>
+        ) : processing ? (
+          <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
+            処理中...
+          </span>
         ) : (
           <button
             type="button"
@@ -106,6 +125,11 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
           >
             写真を選択
           </button>
+        )}
+        {photo && processing && (
+          <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-xs text-gray-700">
+            処理中...
+          </span>
         )}
         <input
           ref={inputRef}
@@ -146,6 +170,9 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
           </div>
         </div>
       ) : null}
+      <p role="alert" aria-live="polite" className="text-xs text-red-600 empty:hidden">
+        {error}
+      </p>
     </div>
   );
 }

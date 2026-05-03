@@ -3,7 +3,7 @@
 import { forwardRef } from 'react';
 import { buildMonthGrid, WEEKDAYS } from '@/lib/calendar';
 import type { LayoutType, PhotoTransform } from '@/lib/types';
-import { DEFAULT_PHOTO_TRANSFORM } from '@/lib/types';
+import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
 import { DateNumber } from './DateNumber';
 
 export type LayoutSpec = {
@@ -14,12 +14,6 @@ export type LayoutSpec = {
 };
 
 export const LAYOUT_SPECS: Record<LayoutType, LayoutSpec> = {
-  'desk-vertical': {
-    id: 'desk-vertical',
-    label: '卓上 縦 (12.7×21.5cm)',
-    widthMm: 127,
-    heightMm: 215,
-  },
   'desk-horizontal': {
     id: 'desk-horizontal',
     label: '卓上 横 (14.4×8.6cm)',
@@ -60,9 +54,6 @@ export const CalendarPage = forwardRef<HTMLDivElement, Props>(function CalendarP
         height: `${spec.heightMm}mm`,
       }}
     >
-      {layout === 'desk-vertical' && (
-        <DeskVerticalLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
-      )}
       {layout === 'desk-horizontal' && (
         <DeskHorizontalLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
       )}
@@ -114,28 +105,13 @@ function PhotoBox({
   );
 }
 
-function DeskVerticalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
-  return (
-    <div className="flex h-full w-full flex-col p-[8mm]">
-      <div className="flex h-[42%] w-full items-center justify-center">
-        <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
-      </div>
-      <div className="mt-[6mm] flex items-end gap-2">
-        <div style={{ fontSize: '20mm', lineHeight: 1 }}>
-          <DateNumber value={month} fontSize={56} />
-        </div>
-        <div className="pb-[3mm] text-[5mm] text-gray-500">{year}</div>
-      </div>
-      <CalendarGrid weeks={weeks} cellFont={11} headerFont={6} />
-    </div>
-  );
-}
-
 function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
-    <div className="flex h-full w-full flex-row p-[5mm]">
-      <div className="h-full w-[40%]">
-        <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
+    <div className="flex h-full w-full flex-row p-[6mm]">
+      <div className="flex h-full w-[35%] items-center justify-center">
+        <div className="w-full" style={{ aspectRatio: PHOTO_ASPECT }}>
+          <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
+        </div>
       </div>
       <div className="flex h-full flex-1 flex-col pl-[5mm]">
         <div className="flex items-baseline justify-between">
@@ -145,7 +121,7 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
           </div>
         </div>
         <div className="mt-[2mm] flex-1">
-          <CalendarGrid weeks={weeks} cellFont={7} headerFont={4} compact />
+          <CalendarGrid weeks={weeks} cellFont={6} headerFont={4} compact />
         </div>
       </div>
     </div>
@@ -155,7 +131,7 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
 function WallLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-col p-[8mm]">
-      <div className="h-[40%] w-full">
+      <div className="w-full" style={{ aspectRatio: PHOTO_ASPECT }}>
         <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
       </div>
       <div className="mt-[8mm] flex items-end justify-center gap-3">

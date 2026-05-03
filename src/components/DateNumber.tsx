@@ -3,11 +3,10 @@
 import { useCalendarStore } from '@/lib/store';
 
 export function DateNumber({ value, fontSize }: { value: number; fontSize: number }) {
-  const useHandwritten = useCalendarStore((s) => s.useHandwrittenDigits);
   const digitImages = useCalendarStore((s) => s.digitImages);
 
   const digits = String(value).split('').map((d) => Number(d));
-  const allAvailable = useHandwritten && digits.every((d) => digitImages[d as 0]);
+  const allAvailable = digits.every((d) => digitImages[d as 0]);
 
   if (allAvailable) {
     return (

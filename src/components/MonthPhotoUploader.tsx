@@ -58,10 +58,13 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const beginProcessing = useCalendarStore((s) => s.beginProcessing);
+  const endProcessing = useCalendarStore((s) => s.endProcessing);
 
   const handleFile = async (file: File) => {
     setProcessing(true);
     setError(null);
+    beginProcessing();
     try {
       const normalized = await normalizeImageFile(file);
       const url = await fileToDataURL(normalized);
@@ -71,6 +74,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
       setError('写真を読み込めませんでした。別の画像でお試しください。');
     } finally {
       setProcessing(false);
+      endProcessing();
     }
   };
 
@@ -166,7 +170,9 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
           </div>
         </div>
       ) : null}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      <p role="alert" aria-live="polite" className="text-xs text-red-600 empty:hidden">
+        {error}
+      </p>
     </div>
   );
 }

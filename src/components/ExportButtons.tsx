@@ -107,7 +107,9 @@ export function ExportButtons() {
           </span>
         )}
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <p role="alert" aria-live="polite" className="text-sm text-red-600 empty:hidden">
+        {error}
+      </p>
     </div>
   );
 }

@@ -105,18 +105,19 @@ export function cropPhotoCached(
 /**
  * キャッシュ済みのクロップ結果を同期取得する。未完了/未実行なら undefined。
  * PhotoBox がマウント時に既にウォーム済みのキャッシュを即座に表示するために使う。
+ *
+ * useState の initializer から呼ばれる可能性があり、StrictMode/Concurrent では
+ * commit されない render でも初期化関数が走りうるため、ここでは Map の順序を
+ * 触らず純粋な read に留める。実利用時の LRU 反映は cropPhotoCached 側で
+ * useEffect 経由(commit 後)に行うので、本当に使われたものだけが反映される。
  */
 export function getCachedCrop(
   src: string,
   transform: CropTransform,
   targetAspect: number,
 ): string | undefined {
-  const key = cropCacheKey(src, transform, targetAspect);
-  const cached = cropCache.get(key);
-  if (typeof cached !== 'string') return undefined;
-  // 同期取得した分も「最近使った」扱いにする
-  touchCacheKey(key, cached);
-  return cached;
+  const cached = cropCache.get(cropCacheKey(src, transform, targetAspect));
+  return typeof cached === 'string' ? cached : undefined;
 }
 
 type RemoveWhiteBackgroundOptions = {

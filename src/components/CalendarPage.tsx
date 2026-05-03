@@ -105,13 +105,26 @@ function PhotoBox({
   );
 }
 
+/**
+ * 写真エリアに固定の縦横比を持たせるラッパー。
+ * CSS の `aspect-ratio` プロパティだと html2canvas-pro が正しく解釈せず
+ * PDF 出力時にレイアウトが崩れるため、互換性の高い padding-top トリックを使う。
+ */
+function AspectBox({ aspect, children }: { aspect: number; children: React.ReactNode }) {
+  return (
+    <div className="relative w-full" style={{ paddingTop: `${100 / aspect}%` }}>
+      <div className="absolute inset-0">{children}</div>
+    </div>
+  );
+}
+
 function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-row p-[6mm]">
       <div className="flex h-full w-[35%] items-center justify-center">
-        <div className="w-full" style={{ aspectRatio: PHOTO_ASPECT }}>
+        <AspectBox aspect={PHOTO_ASPECT}>
           <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
-        </div>
+        </AspectBox>
       </div>
       <div className="flex h-full flex-1 flex-col pl-[5mm]">
         <div className="flex items-baseline justify-between">
@@ -131,9 +144,9 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
 function WallLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-col p-[8mm]">
-      <div className="w-full" style={{ aspectRatio: PHOTO_ASPECT }}>
+      <AspectBox aspect={PHOTO_ASPECT}>
         <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
-      </div>
+      </AspectBox>
       <div className="mt-[8mm] flex items-end justify-center gap-3">
         <div style={{ fontSize: '24mm', lineHeight: 1 }}>
           <DateNumber value={month} fontSize={68} />

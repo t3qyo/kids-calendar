@@ -21,13 +21,14 @@ export function ExportButtons() {
 
   // 出力前に全月分のクロップを完了させる。useCroppedPhoto と同じキャッシュを共有しているので、
   // ここで await した時点で ExportRenderArea 側の PhotoBox も同じ結果を読める状態になる。
+  // クロップ失敗は出力結果が空欄/古いまま素通りしないよう、握り潰さず呼び出し側に伝える。
   const warmCropCache = async () => {
     await Promise.all(
       months.map(({ month }) => {
         const photo = monthPhotos[month];
         if (!photo) return Promise.resolve();
         const transform = photoTransforms[month] ?? DEFAULT_PHOTO_TRANSFORM;
-        return cropPhotoCached(photo, transform, PHOTO_ASPECT).catch(() => undefined);
+        return cropPhotoCached(photo, transform, PHOTO_ASPECT);
       }),
     );
     // 直後に React が PhotoBox の state を流し、IMG が DOM に乗るまで 2 フレーム待つ
@@ -128,17 +129,33 @@ export function ExportButtons() {
  * 指定 node 配下の <img> がすべて load 完了するのを待つ。
  * data URL でも実 IMG 要素はデコードに 1 フレーム必要なケースがあるため、
  * html2canvas に渡す前に確実にロード済みにする。
+ *
+ * 既に load/error が確定している(`complete === true`)ケースを最初に
+ * 判定しておくことで、リスナー登録前に確定した IMG で永久に待ち続ける
+ * race を避ける。`naturalWidth === 0` の complete はロード失敗扱いで reject。
  */
 async function waitForImagesLoaded(node: HTMLElement): Promise<void> {
   const imgs = Array.from(node.querySelectorAll('img'));
   await Promise.all(
-    imgs.map((img) => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      return new Promise<void>((resolve) => {
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
-      });
-    }),
+    imgs.map(
+      (img) =>
+        new Promise<void>((resolve, reject) => {
+          if (img.complete) {
+            if (img.naturalWidth > 0) resolve();
+            else reject(new Error(`Image failed to load: ${truncate(img.src)}`));
+            return;
+          }
+          img.addEventListener('load', () => resolve(), { once: true });
+          img.addEventListener(
+            'error',
+            () => reject(new Error(`Image failed to load: ${truncate(img.src)}`)),
+            { once: true },
+          );
+        }),
+    ),
   );
+}
+
+function truncate(value: string, max = 80): string {
+  return value.length > max ? `${value.slice(0, max)}…` : value;
 }

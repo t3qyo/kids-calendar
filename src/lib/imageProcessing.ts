@@ -45,11 +45,31 @@ type CropTransform = { focusX: number; focusY: number; zoom: number };
  * (photo, transform, targetAspect) に対するクロップ結果を共有するモジュールキャッシュ。
  * CalendarPreview と ExportRenderArea が同じ写真を二重にデコード/クロップするのを避ける。
  * 値はクロップ完了後の dataURL 文字列、もしくは進行中のPromise。
+ *
+ * Map は挿入順を保持するため、size が上限を超えたら一番古い key から evict することで
+ * LRU 風の振る舞いになる。データURLを長期間保持してメモリを食い続けないようにする。
  */
+const CROP_CACHE_MAX_ENTRIES = 36;
 const cropCache = new Map<string, string | Promise<string>>();
 
 function cropCacheKey(src: string, transform: CropTransform, targetAspect: number): string {
   return `${targetAspect}|${transform.focusX}|${transform.focusY}|${transform.zoom}|${src}`;
+}
+
+/**
+ * Map のキーを「最近使った」扱いにする(末尾に詰め直す)。
+ */
+function touchCacheKey(key: string, value: string | Promise<string>): void {
+  cropCache.delete(key);
+  cropCache.set(key, value);
+}
+
+function setCropCacheEntry(key: string, value: string | Promise<string>): void {
+  if (!cropCache.has(key) && cropCache.size >= CROP_CACHE_MAX_ENTRIES) {
+    const oldest = cropCache.keys().next().value;
+    if (oldest !== undefined) cropCache.delete(oldest);
+  }
+  cropCache.set(key, value);
 }
 
 /**
@@ -63,19 +83,22 @@ export function cropPhotoCached(
 ): Promise<string> {
   const key = cropCacheKey(src, transform, targetAspect);
   const cached = cropCache.get(key);
-  if (typeof cached === 'string') return Promise.resolve(cached);
-  if (cached) return cached;
+  if (cached !== undefined) {
+    touchCacheKey(key, cached);
+    return typeof cached === 'string' ? Promise.resolve(cached) : cached;
+  }
 
   const promise = cropPhotoToDataURL(src, transform, targetAspect)
     .then((value) => {
-      cropCache.set(key, value);
+      // 解決時は文字列で置き換える(削除 + 設定で再度末尾に来る)
+      setCropCacheEntry(key, value);
       return value;
     })
     .catch((error) => {
       cropCache.delete(key);
       throw error;
     });
-  cropCache.set(key, promise);
+  setCropCacheEntry(key, promise);
   return promise;
 }
 
@@ -88,8 +111,12 @@ export function getCachedCrop(
   transform: CropTransform,
   targetAspect: number,
 ): string | undefined {
-  const cached = cropCache.get(cropCacheKey(src, transform, targetAspect));
-  return typeof cached === 'string' ? cached : undefined;
+  const key = cropCacheKey(src, transform, targetAspect);
+  const cached = cropCache.get(key);
+  if (typeof cached !== 'string') return undefined;
+  // 同期取得した分も「最近使った」扱いにする
+  touchCacheKey(key, cached);
+  return cached;
 }
 
 type RemoveWhiteBackgroundOptions = {

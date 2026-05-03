@@ -1,4 +1,5 @@
 import { CalendarPreview } from '@/components/CalendarPreview';
+import { ClearAllButton } from '@/components/ClearAllButton';
 import { DigitUploader } from '@/components/DigitUploader';
 import { ExportButtons } from '@/components/ExportButtons';
 import { ExportRenderArea } from '@/components/ExportRenderArea';
@@ -19,9 +20,12 @@ export default function Home() {
         <p className="text-sm text-gray-600">
           子供の写真と手書きの数字で、世界に一つだけのオリジナルカレンダーをつくれます。
         </p>
-        <p className="text-xs text-amber-700">
-          ※ アップロードした写真や数字はブラウザを閉じる/リロードすると消えます。
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <p className="text-xs text-gray-500">
+            編集内容はこのブラウザに自動保存されます。別の端末・別のブラウザでは引き継がれません。
+          </p>
+          <ClearAllButton />
+        </div>
       </header>
 
       <Section step="1" title="開始月を選ぶ" description="開始月から12ヶ月分のカレンダーを作成します。">

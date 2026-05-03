@@ -22,6 +22,8 @@ type RemoveWhiteBackgroundOptions = {
   edgeBand?: number;
   /** トリム後に画像周囲に追加する余白の比率(0-1)。フォントの数字と高さを揃えやすくするため少し大きめ。 */
   paddingRatio?: number;
+  /** ストロークを太らせる比率(数字の高さに対する割合)。かすれた手書きを補強する。 */
+  dilationRatio?: number;
   /** トリムするか */
   trim?: boolean;
 };
@@ -30,7 +32,7 @@ export async function removeWhiteBackground(
   src: string,
   options: RemoveWhiteBackgroundOptions = {},
 ): Promise<string> {
-  const { edgeBand = 12, paddingRatio = 0.12, trim = true } = options;
+  const { edgeBand = 12, paddingRatio = 0.12, dilationRatio = 0.015, trim = true } = options;
   const img = await loadImage(src);
 
   const canvas = document.createElement('canvas');
@@ -93,21 +95,21 @@ export async function removeWhiteBackground(
   }
   const otsu = otsuThreshold(stretchedHist, pixelCount);
 
-  // 4. 各ピクセルを「背景=完全透明」「インク=完全不透明」「境界=細いアンチエイリアス」で塗り直す
+  // 4. 各ピクセルのインク濃度(=alpha)を計算する
   const upperBand = otsu + edgeBand;
   const lowerBand = Math.max(0, otsu - edgeBand);
   const bandRange = Math.max(1, upperBand - lowerBand);
 
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
+  const alphaBuffer = new Uint8ClampedArray(pixelCount);
+  let preMinX = width;
+  let preMinY = height;
+  let preMaxX = 0;
+  let preMaxY = 0;
   let hasOpaque = false;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const p = y * width + x;
-      const i = p * 4;
       const v = stretched[p];
 
       let alpha: number;
@@ -116,11 +118,46 @@ export async function removeWhiteBackground(
       } else if (v <= lowerBand) {
         alpha = 255;
       } else {
-        // 境界はリニア補間で滑らかに
         const t = (upperBand - v) / bandRange;
         alpha = Math.round(255 * t);
       }
+      alphaBuffer[p] = alpha;
 
+      if (alpha >= 200) {
+        hasOpaque = true;
+        if (x < preMinX) preMinX = x;
+        if (y < preMinY) preMinY = y;
+        if (x > preMaxX) preMaxX = x;
+        if (y > preMaxY) preMaxY = y;
+      }
+    }
+  }
+
+  if (!hasOpaque) {
+    // 透過対象が見つからない場合はそのまま返す
+    for (let p = 0; p < pixelCount; p++) data[p * 4 + 3] = alphaBuffer[p];
+    ctx.putImageData(imageData, 0, 0);
+    return canvas.toDataURL('image/png');
+  }
+
+  // 5. かすれを埋めるため数字の高さに応じてストロークを膨張させる(separable max filter)
+  const inkHeight = preMaxY - preMinY + 1;
+  const dilateRadius = Math.min(
+    30,
+    Math.max(1, Math.round(inkHeight * dilationRatio)),
+  );
+  const dilatedAlpha = dilateAlpha(alphaBuffer, width, height, dilateRadius);
+
+  // 6. 結果をピクセルに書き戻し、トリム用の最終 bbox を求める
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const p = y * width + x;
+      const i = p * 4;
+      const alpha = dilatedAlpha[p];
       if (alpha === 0) {
         data[i + 3] = 0;
       } else {
@@ -128,9 +165,7 @@ export async function removeWhiteBackground(
         data[i + 1] = 20;
         data[i + 2] = 20;
         data[i + 3] = alpha;
-
         if (alpha >= 200) {
-          hasOpaque = true;
           if (x < minX) minX = x;
           if (y < minY) minY = y;
           if (x > maxX) maxX = x;
@@ -142,7 +177,7 @@ export async function removeWhiteBackground(
 
   ctx.putImageData(imageData, 0, 0);
 
-  if (!trim || !hasOpaque) {
+  if (!trim) {
     return canvas.toDataURL('image/png');
   }
 
@@ -164,6 +199,47 @@ export async function removeWhiteBackground(
   cctx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
   return cropped.toDataURL('image/png');
+}
+
+/**
+ * 各ピクセルのアルファ値を半径 radius のチェビシェフ距離で max フィルタにかける(=膨張)。
+ * 二回の 1 次元 max フィルタとして実装し O(W*H*radius) で済ませる。
+ */
+function dilateAlpha(
+  source: Uint8ClampedArray,
+  width: number,
+  height: number,
+  radius: number,
+): Uint8ClampedArray {
+  if (radius <= 0) return source;
+  const horizontal = new Uint8ClampedArray(source.length);
+  for (let y = 0; y < height; y++) {
+    const rowStart = y * width;
+    for (let x = 0; x < width; x++) {
+      const x0 = x - radius < 0 ? 0 : x - radius;
+      const x1 = x + radius >= width ? width - 1 : x + radius;
+      let m = 0;
+      for (let xi = x0; xi <= x1; xi++) {
+        const a = source[rowStart + xi];
+        if (a > m) m = a;
+      }
+      horizontal[rowStart + x] = m;
+    }
+  }
+  const out = new Uint8ClampedArray(source.length);
+  for (let y = 0; y < height; y++) {
+    const y0 = y - radius < 0 ? 0 : y - radius;
+    const y1 = y + radius >= height ? height - 1 : y + radius;
+    for (let x = 0; x < width; x++) {
+      let m = 0;
+      for (let yi = y0; yi <= y1; yi++) {
+        const a = horizontal[yi * width + x];
+        if (a > m) m = a;
+      }
+      out[y * width + x] = m;
+    }
+  }
+  return out;
 }
 
 /**

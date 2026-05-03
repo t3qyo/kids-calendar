@@ -12,9 +12,22 @@ export type LayoutSpec = {
   label: string;
   widthMm: number;
   heightMm: number;
+  /**
+   * 両面印刷で裏面に次の月が来るレイアウト。PDF 出力時、偶数ページ (裏面) を
+   * 180° 回転させて配置することで、上端綴じ・下からめくった時に正しい向きで
+   * 次の月が見えるようにする。
+   */
+  doubleSided?: boolean;
 };
 
 export const LAYOUT_SPECS: Record<LayoutType, LayoutSpec> = {
+  'wall-a4': {
+    id: 'wall-a4',
+    label: 'A4 壁かけ (210×297mm, 両面)',
+    widthMm: 210,
+    heightMm: 297,
+    doubleSided: true,
+  },
   'desk-horizontal': {
     id: 'desk-horizontal',
     label: '卓上 横 (14.4×8.6cm)',
@@ -55,6 +68,9 @@ export const CalendarPage = forwardRef<HTMLDivElement, Props>(function CalendarP
         height: `${spec.heightMm}mm`,
       }}
     >
+      {layout === 'wall-a4' && (
+        <WallA4Layout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
+      )}
       {layout === 'desk-horizontal' && (
         <DeskHorizontalLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
       )}
@@ -173,6 +189,31 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
         <div className="mt-[2mm] flex-1">
           <CalendarGrid weeks={weeks} cellFont={6} headerFont={4} compact />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function WallA4Layout({ year, month, photo, weeks, transform }: LayoutProps) {
+  return (
+    <div className="flex h-full w-full flex-col p-[15mm]">
+      {/* 写真は高さ固定 (160mm) で正方形を維持。AspectBox は width 起点でしか効かないので
+          ここでは mm の固定寸法で正方形を作って中央寄せする */}
+      <div className="flex w-full justify-center">
+        <div style={{ width: '160mm', height: '160mm' }}>
+          <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
+        </div>
+      </div>
+      <div className="mt-[10mm] flex items-end justify-center gap-4">
+        <div style={{ fontSize: '32mm', lineHeight: 1 }}>
+          <DateNumber value={month} fontSize={92} />
+        </div>
+        <div className="pb-[5mm] text-gray-500">
+          <DateNumber value={year} fontSize={22} />
+        </div>
+      </div>
+      <div className="mt-[6mm] flex-1">
+        <CalendarGrid weeks={weeks} cellFont={14} headerFont={8} />
       </div>
     </div>
   );

@@ -66,7 +66,12 @@ export function ExportButtons() {
       for (let i = 0; i < months.length; i++) {
         const { year, month } = months[i];
         setProgress({ current: i + 1, total: months.length });
-        const canvas = await renderPage(`${year}-${month}`);
+        let canvas = await renderPage(`${year}-${month}`);
+        // 両面前提のレイアウトでは、裏面 (偶数 index = 2,4,6...) を 180° 回転して
+        // 配置する。上端綴じで下からめくると正しい向きで次の月が現れるようにするため。
+        if (spec.doubleSided && i % 2 === 1) {
+          canvas = rotateCanvas180(canvas);
+        }
         const imgData = canvas.toDataURL('image/jpeg', 0.92);
         if (i > 0) pdf.addPage([spec.widthMm, spec.heightMm], orientation);
         pdf.addImage(imgData, 'JPEG', 0, 0, spec.widthMm, spec.heightMm, undefined, 'FAST');
@@ -107,6 +112,8 @@ export function ExportButtons() {
     }
   };
 
+  const spec = LAYOUT_SPECS[layout];
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -132,6 +139,17 @@ export function ExportButtons() {
           </span>
         )}
       </div>
+      {spec.doubleSided && (
+        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <p className="font-medium">印刷設定（A4 両面壁かけ）</p>
+          <ul className="mt-1 list-disc pl-4 space-y-0.5">
+            <li>用紙: A4 / 倍率: 100% (実際のサイズ)</li>
+            <li>両面印刷: <span className="font-medium">長辺とじ</span></li>
+            <li>印刷後、用紙の<span className="font-medium">上端</span>を綴じる (パンチ穴 + 紐 / クリップなど)</li>
+            <li>下端からめくると、裏面に翌月が正しい向きで現れます</li>
+          </ul>
+        </div>
+      )}
       <p role="alert" aria-live="polite" className="text-sm text-red-600 empty:hidden">
         {error}
       </p>
@@ -172,4 +190,16 @@ async function waitForImagesLoaded(node: HTMLElement): Promise<void> {
 
 function truncate(value: string, max = 80): string {
   return value.length > max ? `${value.slice(0, max)}…` : value;
+}
+
+function rotateCanvas180(source: HTMLCanvasElement): HTMLCanvasElement {
+  const out = document.createElement('canvas');
+  out.width = source.width;
+  out.height = source.height;
+  const ctx = out.getContext('2d');
+  if (!ctx) throw new Error('Canvas context not available');
+  ctx.translate(source.width, source.height);
+  ctx.rotate(Math.PI);
+  ctx.drawImage(source, 0, 0);
+  return out;
 }

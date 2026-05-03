@@ -1,4 +1,4 @@
-export type LayoutType = 'desk-horizontal' | 'wall';
+export type LayoutType = 'wall-a4' | 'desk-horizontal' | 'wall';
 
 /**
  * 全レイアウト共通の写真エリア縦横比(横/縦)。

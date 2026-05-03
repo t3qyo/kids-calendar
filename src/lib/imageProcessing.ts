@@ -1,3 +1,5 @@
+'use client';
+
 export async function fileToDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

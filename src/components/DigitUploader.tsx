@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
-import { fileToDataURL, removeWhiteBackground } from '@/lib/imageProcessing';
+import { fileToDataURL, normalizeImageFile, removeWhiteBackground } from '@/lib/imageProcessing';
 
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
@@ -47,7 +47,8 @@ function DigitSlot({
   const handleFile = async (file: File) => {
     setProcessing(true);
     try {
-      const raw = await fileToDataURL(file);
+      const normalized = await normalizeImageFile(file);
+      const raw = await fileToDataURL(normalized);
       const processed = await removeWhiteBackground(raw, { trim: true });
       onPick(processed);
     } finally {
@@ -74,7 +75,7 @@ function DigitSlot({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];

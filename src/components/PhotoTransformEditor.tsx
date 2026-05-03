@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
 import { DEFAULT_PHOTO_TRANSFORM, type PhotoTransform } from '@/lib/types';
 import { LAYOUT_SPECS } from './CalendarPage';
@@ -29,10 +29,6 @@ export function PhotoTransformEditor({ month, open, onClose }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; startFocus: { x: number; y: number } } | null>(null);
-
-  useEffect(() => {
-    if (open) setDraft(stored ?? DEFAULT_PHOTO_TRANSFORM);
-  }, [open, stored]);
 
   if (!open || !photo) return null;
 

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
-import { fileToDataURL } from '@/lib/imageProcessing';
+import { fileToDataURL, normalizeImageFile } from '@/lib/imageProcessing';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { DEFAULT_PHOTO_TRANSFORM } from '@/lib/types';
 import { PhotoTransformEditor } from './PhotoTransformEditor';
@@ -58,7 +58,8 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
-    const url = await fileToDataURL(file);
+    const normalized = await normalizeImageFile(file);
+    const url = await fileToDataURL(normalized);
     onPick(url);
   };
 
@@ -109,7 +110,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];

@@ -107,11 +107,13 @@ function PhotoBox({
 
 function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
-    <div className="flex h-full w-full flex-row p-[5mm]">
-      <div className="h-full" style={{ aspectRatio: PHOTO_ASPECT }}>
-        <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
+    <div className="flex h-full w-full flex-row p-[6mm]">
+      <div className="flex h-full w-[35%] items-center justify-center">
+        <div className="w-full" style={{ aspectRatio: PHOTO_ASPECT }}>
+          <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
+        </div>
       </div>
-      <div className="flex h-full flex-1 flex-col pl-[4mm]">
+      <div className="flex h-full flex-1 flex-col pl-[5mm]">
         <div className="flex items-baseline justify-between">
           <div className="text-[3mm] text-gray-500">{year}</div>
           <div style={{ fontSize: '12mm', lineHeight: 1 }}>
@@ -129,7 +131,7 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
 function WallLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-col p-[8mm]">
-      <div className="h-[40%] w-full">
+      <div className="w-full" style={{ aspectRatio: PHOTO_ASPECT }}>
         <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
       </div>
       <div className="mt-[8mm] flex items-end justify-center gap-3">

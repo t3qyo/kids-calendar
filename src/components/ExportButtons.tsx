@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { track } from '@vercel/analytics';
 import { useCalendarStore } from '@/lib/store';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { cropPhotoCached } from '@/lib/imageProcessing';
@@ -9,6 +10,10 @@ import { LAYOUT_SPECS } from './CalendarPage';
 
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
+// 「PDF を初めて出力したユーザかどうか」を一度だけ記録するためのフラグ。
+// Vercel Analytics の Events は count 表示でユニーク visitor 集計が無いため、
+// この flag が立っていない時だけ別イベントを発火することで「初回出力ユーザ数」を近似する。
+const PDF_FIRST_EXPORT_KEY = 'kids-calendar-pdf-exported-once';
 const CROP_MARK_LENGTH_MM = 4;
 const CROP_MARK_GAP_MM = 1;
 const CROP_MARK_LINE_WIDTH_MM = 0.1;
@@ -23,6 +28,7 @@ export function ExportButtons() {
   const paperSize = useCalendarStore((s) => s.paperSize);
   const monthPhotos = useCalendarStore((s) => s.monthPhotos);
   const photoTransforms = useCalendarStore((s) => s.photoTransforms);
+  const digitImages = useCalendarStore((s) => s.digitImages);
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +108,17 @@ export function ExportButtons() {
         }
       }
       pdf.save(`${fileBase}.pdf`);
+      const photoCount = months.filter(({ month }) => Boolean(monthPhotos[month])).length;
+      const digitCount = Object.values(digitImages).filter(Boolean).length;
+      track('export_pdf', {
+        layout,
+        paperSize,
+        startYear,
+        startMonth,
+        photoCount,
+        digitCount,
+      });
+      trackPdfFirstExportOnce();
     } catch (err) {
       console.error(err);
       setError('PDFの書き出しに失敗しました。再度お試しください。');
@@ -128,6 +145,7 @@ export function ExportButtons() {
         a.click();
         a.remove();
       }
+      track('export_png', { layout, paperSize });
     } catch (err) {
       console.error(err);
       setError('PNGの書き出しに失敗しました。再度お試しください。');
@@ -175,6 +193,22 @@ export function ExportButtons() {
       </p>
     </div>
   );
+}
+
+/**
+ * 同一ブラウザで初めて PDF を出力した時のみ `export_pdf_first_time` を発火する。
+ * localStorage にフラグを残すことでブラウザ単位のユニークユーザ数を近似する
+ * (= プライベートブラウズや別端末からの出力は別ユーザとして再カウントされる)。
+ */
+function trackPdfFirstExportOnce() {
+  if (typeof window === 'undefined') return;
+  try {
+    if (window.localStorage.getItem(PDF_FIRST_EXPORT_KEY)) return;
+    window.localStorage.setItem(PDF_FIRST_EXPORT_KEY, '1');
+    track('export_pdf_first_time');
+  } catch {
+    // localStorage がブロックされている環境では握り潰す
+  }
 }
 
 /**

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { track } from '@vercel/analytics';
 import { useCalendarStore } from '@/lib/store';
 import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile } from '@/lib/imageProcessing';
@@ -73,6 +74,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
       const normalized = await normalizeImageFile(file);
       const url = await fileToDataURL(normalized);
       onPick(url);
+      track('photo_set', { month });
     } catch (err) {
       console.error(err);
       setError('写真を読み込めませんでした。別の画像でお試しください。');

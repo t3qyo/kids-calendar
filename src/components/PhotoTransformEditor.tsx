@@ -59,14 +59,17 @@ function Dialog({ month, photo, onClose }: { month: number; photo: string; onClo
     };
   };
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
+    // setDraft のアップデータが評価されるタイミングで pointerup が走り
+    // dragRef.current が null 化していることがあるため、ローカル変数で固定する
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
     const delta = computeFocusDelta(dx, dy);
     setDraft((prev) => ({
       ...prev,
-      focusX: clamp(dragRef.current!.startFocus.x + delta.dx, 0, 100),
-      focusY: clamp(dragRef.current!.startFocus.y + delta.dy, 0, 100),
+      focusX: clamp(drag.startFocus.x + delta.dx, 0, 100),
+      focusY: clamp(drag.startFocus.y + delta.dy, 0, 100),
     }));
   };
   const handlePointerUp = () => {

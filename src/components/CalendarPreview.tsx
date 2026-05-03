@@ -10,6 +10,7 @@ export function CalendarPreview() {
   const startMonth = useCalendarStore((s) => s.startMonth);
   const layout = useCalendarStore((s) => s.layout);
   const monthPhotos = useCalendarStore((s) => s.monthPhotos);
+  const photoTransforms = useCalendarStore((s) => s.photoTransforms);
   const months = getTwelveMonthsFrom(startYear, startMonth);
 
   return (
@@ -21,6 +22,7 @@ export function CalendarPreview() {
             month={month}
             layout={layout}
             photo={monthPhotos[month]}
+            transform={photoTransforms[month]}
           />
         </PreviewCard>
       ))}

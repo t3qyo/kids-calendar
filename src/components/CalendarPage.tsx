@@ -2,7 +2,8 @@
 
 import { forwardRef } from 'react';
 import { buildMonthGrid, WEEKDAYS } from '@/lib/calendar';
-import type { LayoutType } from '@/lib/types';
+import type { LayoutType, PhotoTransform } from '@/lib/types';
+import { DEFAULT_PHOTO_TRANSFORM } from '@/lib/types';
 import { DateNumber } from './DateNumber';
 
 export type LayoutSpec = {
@@ -38,14 +39,16 @@ type Props = {
   month: number;
   layout: LayoutType;
   photo: string | undefined;
+  transform?: PhotoTransform;
 };
 
 export const CalendarPage = forwardRef<HTMLDivElement, Props>(function CalendarPage(
-  { year, month, layout, photo },
+  { year, month, layout, photo, transform },
   ref,
 ) {
   const spec = LAYOUT_SPECS[layout];
   const weeks = buildMonthGrid(year, month);
+  const t = transform ?? DEFAULT_PHOTO_TRANSFORM;
 
   return (
     <div
@@ -58,13 +61,13 @@ export const CalendarPage = forwardRef<HTMLDivElement, Props>(function CalendarP
       }}
     >
       {layout === 'desk-vertical' && (
-        <DeskVerticalLayout year={year} month={month} photo={photo} weeks={weeks} />
+        <DeskVerticalLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
       )}
       {layout === 'desk-horizontal' && (
-        <DeskHorizontalLayout year={year} month={month} photo={photo} weeks={weeks} />
+        <DeskHorizontalLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
       )}
       {layout === 'wall' && (
-        <WallLayout year={year} month={month} photo={photo} weeks={weeks} />
+        <WallLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
       )}
     </div>
   );
@@ -75,13 +78,33 @@ type LayoutProps = {
   month: number;
   photo: string | undefined;
   weeks: ReturnType<typeof buildMonthGrid>;
+  transform: PhotoTransform;
 };
 
-function PhotoBox({ photo, className }: { photo: string | undefined; className?: string }) {
+function PhotoBox({
+  photo,
+  transform,
+  className,
+}: {
+  photo: string | undefined;
+  transform: PhotoTransform;
+  className?: string;
+}) {
   if (photo) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={photo} alt="" className={`object-cover ${className ?? ''}`} />
+      <div className={`relative overflow-hidden ${className ?? ''}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{
+            objectPosition: `${transform.focusX}% ${transform.focusY}%`,
+            transform: `scale(${transform.zoom})`,
+            transformOrigin: `${transform.focusX}% ${transform.focusY}%`,
+          }}
+        />
+      </div>
     );
   }
   return (
@@ -91,13 +114,11 @@ function PhotoBox({ photo, className }: { photo: string | undefined; className?:
   );
 }
 
-function DeskVerticalLayout({ year, month, photo, weeks }: LayoutProps) {
+function DeskVerticalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-col p-[8mm]">
       <div className="flex h-[42%] w-full items-center justify-center">
-        <div className="h-full w-full overflow-hidden">
-          <PhotoBox photo={photo} className="h-full w-full" />
-        </div>
+        <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
       </div>
       <div className="mt-[6mm] flex items-end gap-2">
         <div style={{ fontSize: '20mm', lineHeight: 1 }}>
@@ -110,11 +131,11 @@ function DeskVerticalLayout({ year, month, photo, weeks }: LayoutProps) {
   );
 }
 
-function DeskHorizontalLayout({ year, month, photo, weeks }: LayoutProps) {
+function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-row p-[5mm]">
       <div className="h-full w-[40%]">
-        <PhotoBox photo={photo} className="h-full w-full" />
+        <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
       </div>
       <div className="flex h-full flex-1 flex-col pl-[5mm]">
         <div className="flex items-baseline justify-between">
@@ -131,11 +152,11 @@ function DeskHorizontalLayout({ year, month, photo, weeks }: LayoutProps) {
   );
 }
 
-function WallLayout({ year, month, photo, weeks }: LayoutProps) {
+function WallLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-col p-[8mm]">
-      <div className="h-[40%] w-full overflow-hidden">
-        <PhotoBox photo={photo} className="h-full w-full" />
+      <div className="h-[40%] w-full">
+        <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
       </div>
       <div className="mt-[8mm] flex items-end justify-center gap-3">
         <div style={{ fontSize: '24mm', lineHeight: 1 }}>

@@ -11,8 +11,8 @@ export function DateNumber({ value, fontSize }: { value: number; fontSize: numbe
   if (allAvailable) {
     return (
       <span
-        className="inline-flex items-end"
-        style={{ height: fontSize * 1.1, lineHeight: 0, gap: fontSize * 0.15 }}
+        className="inline-flex items-end gap-[1px]"
+        style={{ height: fontSize * 1.1, lineHeight: 0 }}
       >
         {digits.map((d, i) => (
           // eslint-disable-next-line @next/next/no-img-element

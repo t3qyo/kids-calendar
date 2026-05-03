@@ -256,11 +256,14 @@ export async function removeWhiteBackground(
     return canvas.toDataURL('image/png');
   }
 
-  // フォントの数字に近い余白を確保するため、トリム後に均等にパディングを足す
+  // フォントの数字に近い余白を確保するため、トリム後に均等にパディングを足す。
+  // 「1」のように細い数字は inkW ベースだと水平余白が小さく「11」が詰まって見えるため、
+  // 大きい方の辺を基準にして縦横同じ絶対量のパディングを付ける。
   const inkW = maxX - minX + 1;
   const inkH = maxY - minY + 1;
-  const padX = Math.round(inkW * paddingRatio);
-  const padY = Math.round(inkH * paddingRatio);
+  const padBase = Math.max(inkW, inkH);
+  const padX = Math.round(padBase * paddingRatio);
+  const padY = Math.round(padBase * paddingRatio);
   const cropX = Math.max(0, minX - padX);
   const cropY = Math.max(0, minY - padY);
   const cropW = Math.min(width - cropX, inkW + padX * 2);

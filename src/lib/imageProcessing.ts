@@ -261,13 +261,11 @@ export async function removeWhiteBackground(
   // 大きい方の辺を基準にして縦横同じ絶対量のパディングを付ける。
   const inkW = maxX - minX + 1;
   const inkH = maxY - minY + 1;
-  const padBase = Math.max(inkW, inkH);
-  const padX = Math.round(padBase * paddingRatio);
-  const padY = Math.round(padBase * paddingRatio);
-  const cropX = Math.max(0, minX - padX);
-  const cropY = Math.max(0, minY - padY);
-  const cropW = Math.min(width - cropX, inkW + padX * 2);
-  const cropH = Math.min(height - cropY, inkH + padY * 2);
+  const pad = Math.round(Math.max(inkW, inkH) * paddingRatio);
+  const cropX = Math.max(0, minX - pad);
+  const cropY = Math.max(0, minY - pad);
+  const cropW = Math.min(width - cropX, inkW + pad * 2);
+  const cropH = Math.min(height - cropY, inkH + pad * 2);
 
   const cropped = document.createElement('canvas');
   cropped.width = cropW;

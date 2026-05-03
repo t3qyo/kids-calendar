@@ -56,9 +56,11 @@ type SlotProps = {
 
 function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: SlotProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
+    setProcessing(true);
     setError(null);
     try {
       const normalized = await normalizeImageFile(file);
@@ -67,6 +69,8 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
     } catch (err) {
       console.error(err);
       setError('写真を読み込めませんでした。別の画像でお試しください。');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -105,6 +109,10 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
               範囲を調整
             </button>
           </>
+        ) : processing ? (
+          <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
+            処理中...
+          </span>
         ) : (
           <button
             type="button"
@@ -113,6 +121,11 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
           >
             写真を選択
           </button>
+        )}
+        {photo && processing && (
+          <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-xs text-gray-700">
+            処理中...
+          </span>
         )}
         <input
           ref={inputRef}

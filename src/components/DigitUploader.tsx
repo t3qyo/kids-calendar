@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { track } from '@vercel/analytics';
 import { useCalendarStore } from '@/lib/store';
 import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile, removeWhiteBackground } from '@/lib/imageProcessing';
@@ -60,6 +61,7 @@ function DigitSlot({
       const raw = await fileToDataURL(normalized);
       const processed = await removeWhiteBackground(raw, { trim: true });
       onPick(processed);
+      track('digit_set', { digit });
     } catch (err) {
       console.error(err);
       setError('数字を読み込めませんでした。別の画像でお試しください。');

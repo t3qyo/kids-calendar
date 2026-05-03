@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@vercel/analytics';
 import { useCalendarStore } from '@/lib/store';
 import type { PaperSize } from '@/lib/types';
 import { LAYOUT_SPECS } from './CalendarPage';
@@ -33,7 +34,10 @@ export function PaperSizeSelector() {
           <button
             key={opt.value}
             type="button"
-            onClick={() => setPaperSize(opt.value)}
+            onClick={() => {
+              setPaperSize(opt.value);
+              track('paper_size_changed', { size: opt.value });
+            }}
             className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
               active
                 ? 'border-gray-900 bg-gray-900 text-white'

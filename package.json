@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "heic2any": "^0.0.4",
     "html2canvas-pro": "^2.0.2",
     "idb-keyval": "^6.2.2",

@@ -82,15 +82,17 @@ function PhotoBox({
   className?: string;
 }) {
   if (photo) {
+    // background-image を使うのは html2canvas-pro が <img> の object-fit / object-position を
+    // 正しく解釈しないため。background-* なら PDF/PNG 出力でも崩れない。
     return (
       <div className={`relative overflow-hidden ${className ?? ''}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photo}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+        <div
+          className="absolute inset-0"
           style={{
-            objectPosition: `${transform.focusX}% ${transform.focusY}%`,
+            backgroundImage: `url(${photo})`,
+            backgroundSize: 'cover',
+            backgroundPosition: `${transform.focusX}% ${transform.focusY}%`,
+            backgroundRepeat: 'no-repeat',
             transform: `scale(${transform.zoom})`,
             transformOrigin: `${transform.focusX}% ${transform.focusY}%`,
           }}

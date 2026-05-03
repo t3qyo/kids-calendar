@@ -5,7 +5,7 @@ import { SocialImageBody } from './_socialImage';
 // 1200x630 のままだと上下が軽くトリミングされ、文字が切れて見えるリスクがある。
 export const size = { width: 1200, height: 600 };
 export const contentType = 'image/png';
-export const alt = 'てがき風カレンダーメーカー';
+export const alt = 'てがき数字カレンダーメーカー';
 
 export default function TwitterImage() {
   return new ImageResponse(<SocialImageBody />, size);

@@ -160,7 +160,9 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
       </div>
       <div className="flex h-full flex-1 flex-col pl-[5mm]">
         <div className="flex items-baseline justify-between">
-          <div className="text-[3mm] text-gray-500">{year}</div>
+          <div className="text-gray-500">
+            <DateNumber value={year} fontSize={11} />
+          </div>
           <div style={{ fontSize: '12mm', lineHeight: 1 }}>
             <DateNumber value={month} fontSize={32} />
           </div>
@@ -183,7 +185,9 @@ function WallLayout({ year, month, photo, weeks, transform }: LayoutProps) {
         <div style={{ fontSize: '24mm', lineHeight: 1 }}>
           <DateNumber value={month} fontSize={68} />
         </div>
-        <div className="pb-[4mm] text-[5mm] text-gray-500">{year}</div>
+        <div className="pb-[4mm] text-gray-500">
+          <DateNumber value={year} fontSize={19} />
+        </div>
       </div>
       <div className="mt-[4mm] flex-1">
         <CalendarGrid weeks={weeks} cellFont={12} headerFont={6} />

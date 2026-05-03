@@ -2,7 +2,7 @@
 
 import { forwardRef, useEffect, useState } from 'react';
 import { buildMonthGrid, WEEKDAYS } from '@/lib/calendar';
-import { cropPhotoToDataURL } from '@/lib/imageProcessing';
+import { cropPhotoCached, getCachedCrop } from '@/lib/imageProcessing';
 import type { LayoutType, PhotoTransform } from '@/lib/types';
 import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
 import { DateNumber } from './DateNumber';
@@ -117,11 +117,14 @@ function CroppedPhotoBox({
 }
 
 function useCroppedPhoto(photo: string, transform: PhotoTransform): string | undefined {
-  const [cropped, setCropped] = useState<string | undefined>(undefined);
+  // 既に他の PhotoBox / Export 経路でクロップ済みなら同期で取得し初期描画から正しい画像を出す
+  const [cropped, setCropped] = useState<string | undefined>(() =>
+    getCachedCrop(photo, transform, PHOTO_ASPECT),
+  );
 
   useEffect(() => {
     let cancelled = false;
-    cropPhotoToDataURL(photo, transform, PHOTO_ASPECT)
+    cropPhotoCached(photo, transform, PHOTO_ASPECT)
       .then((src) => {
         if (!cancelled) setCropped(src);
       })

@@ -65,6 +65,9 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
     setProcessing(true);
     setError(null);
     beginProcessing();
+    // HEIC のデコード(heic2any)はメインスレッドをブロックするため、
+    // 「処理中...」のペイントが先に走るよう一旦ブラウザに yield する
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     try {
       const normalized = await normalizeImageFile(file);
       const url = await fileToDataURL(normalized);

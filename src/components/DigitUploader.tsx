@@ -43,16 +43,25 @@ function DigitSlot({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const beginProcessing = useCalendarStore((s) => s.beginProcessing);
+  const endProcessing = useCalendarStore((s) => s.endProcessing);
 
   const handleFile = async (file: File) => {
     setProcessing(true);
+    setError(null);
+    beginProcessing();
     try {
       const normalized = await normalizeImageFile(file);
       const raw = await fileToDataURL(normalized);
       const processed = await removeWhiteBackground(raw, { trim: true });
       onPick(processed);
+    } catch (err) {
+      console.error(err);
+      setError('数字を読み込めませんでした。別の画像でお試しください。');
     } finally {
       setProcessing(false);
+      endProcessing();
     }
   };
 
@@ -93,6 +102,9 @@ function DigitSlot({
           消す
         </button>
       )}
+      <p role="alert" aria-live="polite" className="text-center text-[10px] text-red-600 empty:hidden">
+        {error}
+      </p>
     </div>
   );
 }

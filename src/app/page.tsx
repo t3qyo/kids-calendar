@@ -4,17 +4,22 @@ import { ExportButtons } from '@/components/ExportButtons';
 import { ExportRenderArea } from '@/components/ExportRenderArea';
 import { LayoutSelector } from '@/components/LayoutSelector';
 import { MonthPhotoUploader } from '@/components/MonthPhotoUploader';
+import { ReloadWarning } from '@/components/ReloadWarning';
 import { StartMonthSelector } from '@/components/StartMonthSelector';
 
 export default function Home() {
   return (
     <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
+      <ReloadWarning />
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Kids Calendar Maker
         </h1>
         <p className="text-sm text-gray-600">
           子供の写真と手書きの数字で、世界に一つだけのオリジナルカレンダーをつくれます。
+        </p>
+        <p className="text-xs text-amber-700">
+          ※ アップロードした写真や数字はブラウザを閉じる/リロードすると消えます。
         </p>
       </header>
 

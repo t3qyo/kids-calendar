@@ -14,7 +14,7 @@ export function CalendarPreview() {
   const months = getTwelveMonthsFrom(startYear, startMonth);
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {months.map(({ year, month }) => (
         <PreviewCard key={`${year}-${month}`}>
           <CalendarPage

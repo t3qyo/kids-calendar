@@ -1,4 +1,7 @@
-export type LayoutType = 'wall-a4' | 'desk-horizontal' | 'wall';
+export type LayoutType = 'desk-horizontal' | 'wall';
+
+/** 印刷用紙の選び方。a4 = 家庭プリンタ・コンビニ用、exact = レイアウト実寸の用紙を用意 */
+export type PaperSize = 'a4' | 'exact';
 
 /**
  * 全レイアウト共通の写真エリア縦横比(横/縦)。

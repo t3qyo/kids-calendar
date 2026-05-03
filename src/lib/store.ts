@@ -16,7 +16,6 @@ type State = {
   monthPhotos: MonthPhotoMap;
   photoTransforms: PhotoTransformMap;
   digitImages: DigitImageMap;
-  useHandwrittenDigits: boolean;
 };
 
 type Actions = {
@@ -26,7 +25,6 @@ type Actions = {
   setMonthPhoto: (month: number, dataUrl: string | undefined) => void;
   setPhotoTransform: (month: number, transform: PhotoTransform | undefined) => void;
   setDigitImage: (digit: number, dataUrl: string | undefined) => void;
-  setUseHandwrittenDigits: (value: boolean) => void;
   reset: () => void;
 };
 
@@ -37,7 +35,6 @@ const initialState: State = {
   monthPhotos: {},
   photoTransforms: {},
   digitImages: {},
-  useHandwrittenDigits: false,
 };
 
 export const useCalendarStore = create<State & Actions>((set) => ({
@@ -77,6 +74,5 @@ export const useCalendarStore = create<State & Actions>((set) => ({
       }
       return { digitImages: next };
     }),
-  setUseHandwrittenDigits: (value) => set({ useHandwrittenDigits: value }),
   reset: () => set(initialState),
 }));

@@ -9,19 +9,9 @@ const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export function DigitUploader() {
   const digitImages = useCalendarStore((s) => s.digitImages);
   const setDigitImage = useCalendarStore((s) => s.setDigitImage);
-  const useHandwritten = useCalendarStore((s) => s.useHandwrittenDigits);
-  const setUseHandwritten = useCalendarStore((s) => s.setUseHandwrittenDigits);
 
   return (
     <div className="space-y-3">
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={useHandwritten}
-          onChange={(e) => setUseHandwritten(e.target.checked)}
-        />
-        手書き数字を使う
-      </label>
       <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
         {DIGITS.map((d) => (
           <DigitSlot
@@ -30,7 +20,6 @@ export function DigitUploader() {
             image={digitImages[d]}
             onPick={(url) => setDigitImage(d, url)}
             onClear={() => setDigitImage(d, undefined)}
-            disabled={!useHandwritten}
           />
         ))}
       </div>
@@ -46,13 +35,11 @@ function DigitSlot({
   image,
   onPick,
   onClear,
-  disabled,
 }: {
   digit: number;
   image: string | undefined;
   onPick: (dataUrl: string) => void;
   onClear: () => void;
-  disabled: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
@@ -73,9 +60,8 @@ function DigitSlot({
       <div className="text-center text-xs text-gray-600">{digit}</div>
       <button
         type="button"
-        disabled={disabled}
         onClick={() => inputRef.current?.click()}
-        className="relative aspect-square w-full overflow-hidden rounded border-2 border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400 transition hover:border-gray-400 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+        className="relative aspect-square w-full overflow-hidden rounded border-2 border-dashed border-gray-300 bg-gray-50 text-xs text-gray-400 transition hover:border-gray-400 hover:bg-gray-100"
       >
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -97,7 +83,7 @@ function DigitSlot({
           }}
         />
       </button>
-      {image && !disabled && (
+      {image && (
         <button
           type="button"
           onClick={onClear}

@@ -3,19 +3,44 @@
 import { useState } from 'react';
 import { useCalendarStore } from '@/lib/store';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
+import { cropPhotoCached } from '@/lib/imageProcessing';
+import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
 import { LAYOUT_SPECS } from './CalendarPage';
 
 export function ExportButtons() {
   const startYear = useCalendarStore((s) => s.startYear);
   const startMonth = useCalendarStore((s) => s.startMonth);
   const layout = useCalendarStore((s) => s.layout);
+  const monthPhotos = useCalendarStore((s) => s.monthPhotos);
+  const photoTransforms = useCalendarStore((s) => s.photoTransforms);
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const months = getTwelveMonthsFrom(startYear, startMonth);
+  const fileBase = `kids-calendar-${startYear}-${String(startMonth).padStart(2, '0')}`;
+
+  // 出力前に全月分のクロップを完了させる。useCroppedPhoto と同じキャッシュを共有しているので、
+  // ここで await した時点で ExportRenderArea 側の PhotoBox も同じ結果を読める状態になる。
+  const warmCropCache = async () => {
+    await Promise.all(
+      months.map(({ month }) => {
+        const photo = monthPhotos[month];
+        if (!photo) return Promise.resolve();
+        const transform = photoTransforms[month] ?? DEFAULT_PHOTO_TRANSFORM;
+        return cropPhotoCached(photo, transform, PHOTO_ASPECT).catch(() => undefined);
+      }),
+    );
+    // 直後に React が PhotoBox の state を流し、IMG が DOM に乗るまで 2 フレーム待つ
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+  };
 
   const renderPage = async (key: string): Promise<HTMLCanvasElement> => {
     const html2canvas = (await import('html2canvas-pro')).default;
     const node = document.querySelector<HTMLElement>(`[data-export-page="${key}"]`);
     if (!node) throw new Error(`page ${key} not found`);
+    await waitForImagesLoaded(node);
     return html2canvas(node, {
       scale: 3,
       backgroundColor: '#ffffff',
@@ -23,12 +48,10 @@ export function ExportButtons() {
     });
   };
 
-  const months = getTwelveMonthsFrom(startYear, startMonth);
-  const fileBase = `kids-calendar-${startYear}-${String(startMonth).padStart(2, '0')}`;
-
   const exportPdf = async () => {
     setExporting(true);
     try {
+      await warmCropCache();
       const { jsPDF } = await import('jspdf');
       const spec = LAYOUT_SPECS[layout];
       const orientation = spec.widthMm >= spec.heightMm ? 'landscape' : 'portrait';
@@ -55,6 +78,7 @@ export function ExportButtons() {
   const exportPng = async () => {
     setExporting(true);
     try {
+      await warmCropCache();
       for (let i = 0; i < months.length; i++) {
         const { year, month } = months[i];
         setProgress({ current: i + 1, total: months.length });
@@ -97,5 +121,24 @@ export function ExportButtons() {
         </span>
       )}
     </div>
+  );
+}
+
+/**
+ * 指定 node 配下の <img> がすべて load 完了するのを待つ。
+ * data URL でも実 IMG 要素はデコードに 1 フレーム必要なケースがあるため、
+ * html2canvas に渡す前に確実にロード済みにする。
+ */
+async function waitForImagesLoaded(node: HTMLElement): Promise<void> {
+  const imgs = Array.from(node.querySelectorAll('img'));
+  await Promise.all(
+    imgs.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const done = () => resolve();
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+    }),
   );
 }

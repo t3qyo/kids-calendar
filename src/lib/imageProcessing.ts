@@ -39,6 +39,59 @@ export async function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+type CropTransform = { focusX: number; focusY: number; zoom: number };
+
+/**
+ * (photo, transform, targetAspect) に対するクロップ結果を共有するモジュールキャッシュ。
+ * CalendarPreview と ExportRenderArea が同じ写真を二重にデコード/クロップするのを避ける。
+ * 値はクロップ完了後の dataURL 文字列、もしくは進行中のPromise。
+ */
+const cropCache = new Map<string, string | Promise<string>>();
+
+function cropCacheKey(src: string, transform: CropTransform, targetAspect: number): string {
+  return `${targetAspect}|${transform.focusX}|${transform.focusY}|${transform.zoom}|${src}`;
+}
+
+/**
+ * cropPhotoToDataURL のキャッシュ付きラッパー。
+ * 同じパラメータ組み合わせなら 1 回しか実行されず、結果は両方の利用者で共有される。
+ */
+export function cropPhotoCached(
+  src: string,
+  transform: CropTransform,
+  targetAspect: number,
+): Promise<string> {
+  const key = cropCacheKey(src, transform, targetAspect);
+  const cached = cropCache.get(key);
+  if (typeof cached === 'string') return Promise.resolve(cached);
+  if (cached) return cached;
+
+  const promise = cropPhotoToDataURL(src, transform, targetAspect)
+    .then((value) => {
+      cropCache.set(key, value);
+      return value;
+    })
+    .catch((error) => {
+      cropCache.delete(key);
+      throw error;
+    });
+  cropCache.set(key, promise);
+  return promise;
+}
+
+/**
+ * キャッシュ済みのクロップ結果を同期取得する。未完了/未実行なら undefined。
+ * PhotoBox がマウント時に既にウォーム済みのキャッシュを即座に表示するために使う。
+ */
+export function getCachedCrop(
+  src: string,
+  transform: CropTransform,
+  targetAspect: number,
+): string | undefined {
+  const cached = cropCache.get(cropCacheKey(src, transform, targetAspect));
+  return typeof cached === 'string' ? cached : undefined;
+}
+
 type RemoveWhiteBackgroundOptions = {
   /** インク/背景境界のアンチエイリアスバンド幅(輝度値, 0-255)。狭いほど境界が硬く濃くなる。 */
   edgeBand?: number;

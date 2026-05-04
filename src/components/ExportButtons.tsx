@@ -6,7 +6,7 @@ import { useCalendarStore } from '@/lib/store';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { cropPhotoCached } from '@/lib/imageProcessing';
 import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
-import { LAYOUT_SPECS } from './CalendarPage';
+import { LAYOUT_SPECS, getTotalHeightMm } from './CalendarPage';
 
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
@@ -74,16 +74,18 @@ export function ExportButtons() {
       const { jsPDF } = await import('jspdf');
       const spec = LAYOUT_SPECS[layout];
 
+      // 留め具余白を含めた本体高さ。レンダリング DOM・PDF 用紙サイズ・トンボ位置はすべてこの値で揃える。
+      const cardH = getTotalHeightMm(spec);
       // 用紙サイズ。a4 はレイアウトを A4 中央に配置 + トンボ。exact はレイアウト実寸そのまま。
       const useA4 = paperSize === 'a4';
       const pageW = useA4 ? A4_WIDTH_MM : spec.widthMm;
-      const pageH = useA4 ? A4_HEIGHT_MM : spec.heightMm;
+      const pageH = useA4 ? A4_HEIGHT_MM : cardH;
       const orientation = pageW >= pageH ? 'landscape' : 'portrait';
 
-      // 卓上横 (144x86mm) は A4 縦に縦並びで 2 ヶ月分載せられるので 2-up にする。
+      // 卓上横 (本体 144x86mm + 留め具 20mm) は A4 縦に縦並びで 2 ヶ月分載せられるので 2-up にする。
       // それ以外(壁掛け / exact 用紙)は従来通り 1 ヶ月 / ページ。
       const cardsPerPage = layout === 'desk-horizontal' && useA4 ? 2 : 1;
-      const cardPositions = computeCardPositions(cardsPerPage, pageW, pageH, spec.widthMm, spec.heightMm);
+      const cardPositions = computeCardPositions(cardsPerPage, pageW, pageH, spec.widthMm, cardH);
 
       const pdf = new jsPDF({ unit: 'mm', format: [pageW, pageH], orientation });
 
@@ -103,8 +105,8 @@ export function ExportButtons() {
           }
           const imgData = canvas.toDataURL('image/jpeg', 0.92);
           const { x, y } = cardPositions[slot];
-          pdf.addImage(imgData, 'JPEG', x, y, spec.widthMm, spec.heightMm, undefined, 'FAST');
-          if (useA4) drawCropMarks(pdf, x, y, spec.widthMm, spec.heightMm);
+          pdf.addImage(imgData, 'JPEG', x, y, spec.widthMm, cardH, undefined, 'FAST');
+          if (useA4) drawCropMarks(pdf, x, y, spec.widthMm, cardH);
         }
       }
       pdf.save(`${fileBase}.pdf`);
@@ -186,6 +188,8 @@ export function ExportButtons() {
         paperSize={paperSize}
         doubleSided={spec.doubleSided ?? false}
         twoUp={layout === 'desk-horizontal' && paperSize === 'a4'}
+        clipMarginMm={spec.clipMarginMm ?? 0}
+        clipSide={spec.clipSide}
       />
 
       <p role="alert" aria-live="polite" className="text-sm text-red-600 empty:hidden">
@@ -250,10 +254,14 @@ function PrintHint({
   paperSize,
   doubleSided,
   twoUp,
+  clipMarginMm,
+  clipSide,
 }: {
   paperSize: 'a4' | 'exact';
   doubleSided: boolean;
   twoUp: boolean;
+  clipMarginMm: number;
+  clipSide?: 'top' | 'bottom';
 }) {
   const items: string[] = [];
   if (paperSize === 'a4') {
@@ -264,6 +272,10 @@ function PrintHint({
     items.push('印刷後、各カードの四隅のトンボ (切り取り線) に沿って切り抜く');
   } else {
     items.push('用紙: PDF と同じサイズ / 倍率: 100% (実際のサイズ・原寸大)');
+  }
+  if (clipMarginMm > 0) {
+    const where = clipSide === 'top' ? '上' : '下';
+    items.push(`カード${where}側に約 ${clipMarginMm}mm の余白あり (留め具・スタンド取付用)`);
   }
   if (doubleSided) {
     items.push('両面印刷: 長辺とじ');

@@ -10,8 +10,17 @@ import { DateNumber } from './DateNumber';
 export type LayoutSpec = {
   id: LayoutType;
   label: string;
+  /** 写真 + カレンダー本体の幅 (留め具余白は含まない) */
   widthMm: number;
+  /** 写真 + カレンダー本体の高さ (留め具余白は含まない) */
   heightMm: number;
+  /**
+   * 印刷後にクリップ・スタンドなどの留め具を取り付けるための余白 (mm)。
+   * 本体とは別にこの mm 数だけ用紙が伸び、`clipSide` で指定した側に空白として印刷される。
+   */
+  clipMarginMm?: number;
+  /** 留め具余白の付与位置 */
+  clipSide?: 'top' | 'bottom';
   /**
    * 両面印刷で裏面に次の月が来るレイアウト。PDF 出力時、偶数ページ (裏面) を
    * 180° 回転させて配置することで、上端綴じ・下からめくった時に正しい向きで
@@ -20,18 +29,27 @@ export type LayoutSpec = {
   doubleSided?: boolean;
 };
 
+/** 留め具余白を含む用紙の総高さ (mm)。PDF 出力時の用紙高さやプレビュー DOM 高さに使う */
+export function getTotalHeightMm(spec: LayoutSpec): number {
+  return spec.heightMm + (spec.clipMarginMm ?? 0);
+}
+
 export const LAYOUT_SPECS: Record<LayoutType, LayoutSpec> = {
   'desk-horizontal': {
     id: 'desk-horizontal',
     label: '卓上 横 (14.4×8.6cm)',
     widthMm: 144,
     heightMm: 86,
+    clipMarginMm: 20,
+    clipSide: 'bottom',
   },
   wall: {
     id: 'wall',
     label: '壁かけ (12.7×25.4cm)',
     widthMm: 127,
     heightMm: 254,
+    clipMarginMm: 20,
+    clipSide: 'top',
     // 表裏で写真位置を揃えたい(=同じ用紙の同じ位置に写真が来てほしい)ため、
     // 偶数ページの自動 180° 回転は無効。両面印刷で裏面の向きを反転させたい場合は
     // プリンタ側の「両面印刷 短辺綴じ」設定で対応する想定。
@@ -54,6 +72,8 @@ export const CalendarPage = forwardRef<HTMLDivElement, Props>(function CalendarP
   const spec = LAYOUT_SPECS[layout];
   const weeks = buildMonthGrid(year, month);
   const t = transform ?? DEFAULT_PHOTO_TRANSFORM;
+  const clipMarginMm = spec.clipMarginMm ?? 0;
+  const clipSide = spec.clipSide;
 
   return (
     <div
@@ -62,14 +82,30 @@ export const CalendarPage = forwardRef<HTMLDivElement, Props>(function CalendarP
       className="relative bg-white text-black shadow-sm"
       style={{
         width: `${spec.widthMm}mm`,
-        height: `${spec.heightMm}mm`,
+        height: `${getTotalHeightMm(spec)}mm`,
       }}
     >
       {layout === 'desk-horizontal' && (
-        <DeskHorizontalLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
+        <DeskHorizontalLayout
+          year={year}
+          month={month}
+          photo={photo}
+          weeks={weeks}
+          transform={t}
+          clipMarginMm={clipMarginMm}
+          clipSide={clipSide}
+        />
       )}
       {layout === 'wall' && (
-        <WallLayout year={year} month={month} photo={photo} weeks={weeks} transform={t} />
+        <WallLayout
+          year={year}
+          month={month}
+          photo={photo}
+          weeks={weeks}
+          transform={t}
+          clipMarginMm={clipMarginMm}
+          clipSide={clipSide}
+        />
       )}
     </div>
   );
@@ -81,6 +117,8 @@ type LayoutProps = {
   photo: string | undefined;
   weeks: ReturnType<typeof buildMonthGrid>;
   transform: PhotoTransform;
+  clipMarginMm: number;
+  clipSide?: 'top' | 'bottom';
 };
 
 function PhotoBox({
@@ -163,9 +201,16 @@ function AspectBox({ aspect, children }: { aspect: number; children: React.React
   );
 }
 
-function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
+function DeskHorizontalLayout({ year, month, photo, weeks, transform, clipMarginMm, clipSide }: LayoutProps) {
+  // 留め具余白は本体の padding (6mm) に上乗せする形で確保する。
+  // h-full の子要素は padding を引いた残り = 本体高さに自動で収まる。
+  const padTop = clipSide === 'top' ? 6 + clipMarginMm : 6;
+  const padBottom = clipSide === 'bottom' ? 6 + clipMarginMm : 6;
   return (
-    <div className="flex h-full w-full flex-row p-[6mm]">
+    <div
+      className="flex h-full w-full flex-row px-[6mm]"
+      style={{ paddingTop: `${padTop}mm`, paddingBottom: `${padBottom}mm` }}
+    >
       <div className="flex h-full w-[50%] items-center justify-center">
         <AspectBox aspect={PHOTO_ASPECT}>
           <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
@@ -188,9 +233,14 @@ function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutPr
   );
 }
 
-function WallLayout({ year, month, photo, weeks, transform }: LayoutProps) {
+function WallLayout({ year, month, photo, weeks, transform, clipMarginMm, clipSide }: LayoutProps) {
+  const padTop = clipSide === 'top' ? 8 + clipMarginMm : 8;
+  const padBottom = clipSide === 'bottom' ? 8 + clipMarginMm : 8;
   return (
-    <div className="flex h-full w-full flex-col p-[8mm]">
+    <div
+      className="flex h-full w-full flex-col px-[8mm]"
+      style={{ paddingTop: `${padTop}mm`, paddingBottom: `${padBottom}mm` }}
+    >
       <AspectBox aspect={PHOTO_ASPECT}>
         <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
       </AspectBox>

@@ -3,7 +3,7 @@
 import { sendGAEvent } from '@next/third-parties/google';
 import { useCalendarStore } from '@/lib/store';
 import type { PaperSize } from '@/lib/types';
-import { LAYOUT_SPECS } from './CalendarPage';
+import { LAYOUT_SPECS, getTotalHeightMm } from './CalendarPage';
 
 const OPTIONS: { value: PaperSize; label: string; description: string }[] = [
   {
@@ -29,7 +29,9 @@ export function PaperSizeSelector() {
       {OPTIONS.map((opt) => {
         const active = paperSize === opt.value;
         const exactLabel =
-          opt.value === 'exact' ? `${opt.label} (${spec.widthMm}×${spec.heightMm}mm)` : opt.label;
+          opt.value === 'exact'
+            ? `${opt.label} (${spec.widthMm}×${getTotalHeightMm(spec)}mm)`
+            : opt.label;
         return (
           <button
             key={opt.value}

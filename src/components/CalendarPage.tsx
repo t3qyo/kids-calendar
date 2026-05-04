@@ -166,7 +166,7 @@ function AspectBox({ aspect, children }: { aspect: number; children: React.React
 function DeskHorizontalLayout({ year, month, photo, weeks, transform }: LayoutProps) {
   return (
     <div className="flex h-full w-full flex-row p-[6mm]">
-      <div className="flex h-full w-[35%] items-center justify-center">
+      <div className="flex h-full w-[50%] items-center justify-center">
         <AspectBox aspect={PHOTO_ASPECT}>
           <PhotoBox photo={photo} transform={transform} className="h-full w-full" />
         </AspectBox>

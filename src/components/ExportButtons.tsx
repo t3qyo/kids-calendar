@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { track } from '@vercel/analytics';
+import { sendGAEvent } from '@next/third-parties/google';
 import { useCalendarStore } from '@/lib/store';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { cropPhotoCached } from '@/lib/imageProcessing';
@@ -110,13 +110,13 @@ export function ExportButtons() {
       pdf.save(`${fileBase}.pdf`);
       const photoCount = months.filter(({ month }) => Boolean(monthPhotos[month])).length;
       const digitCount = Object.values(digitImages).filter(Boolean).length;
-      track('export_pdf', {
+      sendGAEvent('event', 'export_pdf', {
         layout,
-        paperSize,
-        startYear,
-        startMonth,
-        photoCount,
-        digitCount,
+        paper_size: paperSize,
+        start_year: startYear,
+        start_month: startMonth,
+        photo_count: photoCount,
+        digit_count: digitCount,
       });
       trackPdfFirstExportOnce();
     } catch (err) {
@@ -145,7 +145,7 @@ export function ExportButtons() {
         a.click();
         a.remove();
       }
-      track('export_png', { layout, paperSize });
+      sendGAEvent('event', 'export_png', { layout, paper_size: paperSize });
     } catch (err) {
       console.error(err);
       setError('PNGの書き出しに失敗しました。再度お試しください。');
@@ -205,7 +205,7 @@ function trackPdfFirstExportOnce() {
   try {
     if (window.localStorage.getItem(PDF_FIRST_EXPORT_KEY)) return;
     window.localStorage.setItem(PDF_FIRST_EXPORT_KEY, '1');
-    track('export_pdf_first_time');
+    sendGAEvent('event', 'export_pdf_first_time');
   } catch {
     // localStorage がブロックされている環境では握り潰す
   }

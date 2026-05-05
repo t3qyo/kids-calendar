@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useCalendarStore } from './store';
 
+const now = new Date();
+const currentYear = now.getFullYear();
+const currentMonth = now.getMonth() + 1;
+
 const initialSnapshot = useCalendarStore.getState();
 
 beforeEach(() => {
@@ -12,10 +16,10 @@ afterEach(() => {
 });
 
 describe('useCalendarStore - 初期状態', () => {
-  it('startYear=2026, startMonth=1, layout=wall', () => {
+  it('startYear=今年, startMonth=今月, layout=wall', () => {
     const s = useCalendarStore.getState();
-    expect(s.startYear).toBe(2026);
-    expect(s.startMonth).toBe(1);
+    expect(s.startYear).toBe(currentYear);
+    expect(s.startMonth).toBe(currentMonth);
     expect(s.layout).toBe('wall');
     expect(s.monthPhotos).toEqual({});
     expect(s.photoTransforms).toEqual({});
@@ -125,8 +129,8 @@ describe('reset', () => {
 
     useCalendarStore.getState().reset();
     const s = useCalendarStore.getState();
-    expect(s.startYear).toBe(2026);
-    expect(s.startMonth).toBe(1);
+    expect(s.startYear).toBe(currentYear);
+    expect(s.startMonth).toBe(currentMonth);
     expect(s.layout).toBe('wall');
     expect(s.monthPhotos).toEqual({});
     expect(s.photoTransforms).toEqual({});

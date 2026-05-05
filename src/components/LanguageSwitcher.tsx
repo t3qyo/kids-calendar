@@ -7,10 +7,11 @@ export function LanguageSwitcher() {
   const setLocale = useSetLocale();
 
   return (
-    <div className="flex items-center gap-1 text-xs">
+    <div role="group" aria-label="Language / 言語" className="flex items-center gap-1 text-xs">
       <button
         type="button"
         onClick={() => setLocale('ja')}
+        aria-pressed={locale === 'ja'}
         className={`px-2 py-1 rounded transition ${
           locale === 'ja'
             ? 'bg-gray-900 text-white'
@@ -19,10 +20,11 @@ export function LanguageSwitcher() {
       >
         日本語
       </button>
-      <span className="text-gray-300">/</span>
+      <span aria-hidden="true" className="text-gray-300">/</span>
       <button
         type="button"
         onClick={() => setLocale('en')}
+        aria-pressed={locale === 'en'}
         className={`px-2 py-1 rounded transition ${
           locale === 'en'
             ? 'bg-gray-900 text-white'

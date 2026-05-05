@@ -74,6 +74,13 @@ export type Messages = {
     exactLabel: string;
     exactDescription: string;
   };
+  layout: {
+    wall: string;
+    deskHorizontal: string;
+  };
+  calendar: {
+    noPhoto: string;
+  };
   notFound: {
     title: string;
     description: string;

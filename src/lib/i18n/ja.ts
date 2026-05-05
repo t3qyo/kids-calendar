@@ -87,6 +87,13 @@ export const ja: Messages = {
     exactLabel: '実寸の用紙に印刷',
     exactDescription: 'カレンダーと同じサイズの用紙を用意して印刷します。業者印刷向け。',
   },
+  layout: {
+    wall: '壁かけ (12.7×25.4cm)',
+    deskHorizontal: '卓上 横 (14.4×8.6cm)',
+  },
+  calendar: {
+    noPhoto: '写真未設定',
+  },
   notFound: {
     title: 'ページが見つかりません',
     description: 'お探しのページは存在しないか、削除された可能性があります。',

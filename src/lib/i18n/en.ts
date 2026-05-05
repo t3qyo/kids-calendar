@@ -96,6 +96,13 @@ export const en: Messages = {
     exactDescription:
       'Use paper the same size as the calendar. Suited for professional printing.',
   },
+  layout: {
+    wall: 'Wall (12.7×25.4cm)',
+    deskHorizontal: 'Desk horizontal (14.4×8.6cm)',
+  },
+  calendar: {
+    noPhoto: 'No photo',
+  },
   notFound: {
     title: 'Page not found',
     description: "The page you're looking for doesn't exist or has been removed.",

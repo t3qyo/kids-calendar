@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { sendGAEvent } from '@next/third-parties/google';
 import { useCalendarStore } from '@/lib/store';
+import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile, removeWhiteBackground } from '@/lib/imageProcessing';
 
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
@@ -44,18 +46,22 @@ function DigitSlot({
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const beginProcessing = useCalendarStore((s) => s.beginProcessing);
-  const endProcessing = useCalendarStore((s) => s.endProcessing);
+  const beginProcessing = useProcessingStore((s) => s.begin);
+  const endProcessing = useProcessingStore((s) => s.end);
 
   const handleFile = async (file: File) => {
     setProcessing(true);
     setError(null);
     beginProcessing();
+    // HEIC のデコード(heic2any)はメインスレッドをブロックするため、
+    // 「処理中...」のペイントが先に走るよう一旦ブラウザに yield する
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     try {
       const normalized = await normalizeImageFile(file);
       const raw = await fileToDataURL(normalized);
       const processed = await removeWhiteBackground(raw, { trim: true });
       onPick(processed);
+      sendGAEvent('event', 'digit_set', { digit });
     } catch (err) {
       console.error(err);
       setError('数字を読み込めませんでした。別の画像でお試しください。');

@@ -39,6 +39,87 @@ export async function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+type CropTransform = { focusX: number; focusY: number; zoom: number };
+
+/**
+ * (photo, transform, targetAspect) に対するクロップ結果を共有するモジュールキャッシュ。
+ * CalendarPreview と ExportRenderArea が同じ写真を二重にデコード/クロップするのを避ける。
+ * 値はクロップ完了後の dataURL 文字列、もしくは進行中のPromise。
+ *
+ * Map は挿入順を保持するため、size が上限を超えたら一番古い key から evict することで
+ * LRU 風の振る舞いになる。データURLを長期間保持してメモリを食い続けないようにする。
+ */
+const CROP_CACHE_MAX_ENTRIES = 36;
+const cropCache = new Map<string, string | Promise<string>>();
+
+function cropCacheKey(src: string, transform: CropTransform, targetAspect: number): string {
+  return `${targetAspect}|${transform.focusX}|${transform.focusY}|${transform.zoom}|${src}`;
+}
+
+/**
+ * Map のキーを「最近使った」扱いにする(末尾に詰め直す)。
+ */
+function touchCacheKey(key: string, value: string | Promise<string>): void {
+  cropCache.delete(key);
+  cropCache.set(key, value);
+}
+
+function setCropCacheEntry(key: string, value: string | Promise<string>): void {
+  if (!cropCache.has(key) && cropCache.size >= CROP_CACHE_MAX_ENTRIES) {
+    const oldest = cropCache.keys().next().value;
+    if (oldest !== undefined) cropCache.delete(oldest);
+  }
+  cropCache.set(key, value);
+}
+
+/**
+ * cropPhotoToDataURL のキャッシュ付きラッパー。
+ * 同じパラメータ組み合わせなら 1 回しか実行されず、結果は両方の利用者で共有される。
+ */
+export function cropPhotoCached(
+  src: string,
+  transform: CropTransform,
+  targetAspect: number,
+): Promise<string> {
+  const key = cropCacheKey(src, transform, targetAspect);
+  const cached = cropCache.get(key);
+  if (cached !== undefined) {
+    touchCacheKey(key, cached);
+    return typeof cached === 'string' ? Promise.resolve(cached) : cached;
+  }
+
+  const promise = cropPhotoToDataURL(src, transform, targetAspect)
+    .then((value) => {
+      // 解決時は文字列で置き換える(削除 + 設定で再度末尾に来る)
+      setCropCacheEntry(key, value);
+      return value;
+    })
+    .catch((error) => {
+      cropCache.delete(key);
+      throw error;
+    });
+  setCropCacheEntry(key, promise);
+  return promise;
+}
+
+/**
+ * キャッシュ済みのクロップ結果を同期取得する。未完了/未実行なら undefined。
+ * PhotoBox がマウント時に既にウォーム済みのキャッシュを即座に表示するために使う。
+ *
+ * useState の initializer から呼ばれる可能性があり、StrictMode/Concurrent では
+ * commit されない render でも初期化関数が走りうるため、ここでは Map の順序を
+ * 触らず純粋な read に留める。実利用時の LRU 反映は cropPhotoCached 側で
+ * useEffect 経由(commit 後)に行うので、本当に使われたものだけが反映される。
+ */
+export function getCachedCrop(
+  src: string,
+  transform: CropTransform,
+  targetAspect: number,
+): string | undefined {
+  const cached = cropCache.get(cropCacheKey(src, transform, targetAspect));
+  return typeof cached === 'string' ? cached : undefined;
+}
+
 type RemoveWhiteBackgroundOptions = {
   /** インク/背景境界のアンチエイリアスバンド幅(輝度値, 0-255)。狭いほど境界が硬く濃くなる。 */
   edgeBand?: number;
@@ -259,12 +340,12 @@ export async function removeWhiteBackground(
   // フォントの数字に近い余白を確保するため、トリム後にパディングを足す。
   // 通常は inkW/inkH それぞれの比率でパディングを付けるが、「1」のように細い数字は
   // inkW ベースだと水平余白が極端に小さくなり「11」が詰まって見えるため、
-  // 横パディングは padY の 0.7 倍を下限として確保する。
+  // 横パディングは padY の 0.9 倍を下限として確保する(以前 0.7 → 11 系がまだ詰まって見える指摘で +0.2)。
   // (これより大きい inkW * paddingRatio が出る数字 = 「2」以降は元の挙動を維持)
   const inkW = maxX - minX + 1;
   const inkH = maxY - minY + 1;
   const padY = Math.round(inkH * paddingRatio);
-  const padX = Math.max(Math.round(inkW * paddingRatio), Math.round(padY * 0.7));
+  const padX = Math.max(Math.round(inkW * paddingRatio), Math.round(padY * 0.9));
   const cropX = Math.max(0, minX - padX);
   const cropY = Math.max(0, minY - padY);
   const cropW = Math.min(width - cropX, inkW + padX * 2);

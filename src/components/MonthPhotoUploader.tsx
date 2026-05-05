@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { sendGAEvent } from '@next/third-parties/google';
 import { useCalendarStore } from '@/lib/store';
+import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile } from '@/lib/imageProcessing';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { DEFAULT_PHOTO_TRANSFORM } from '@/lib/types';
@@ -58,17 +60,21 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
   const inputRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const beginProcessing = useCalendarStore((s) => s.beginProcessing);
-  const endProcessing = useCalendarStore((s) => s.endProcessing);
+  const beginProcessing = useProcessingStore((s) => s.begin);
+  const endProcessing = useProcessingStore((s) => s.end);
 
   const handleFile = async (file: File) => {
     setProcessing(true);
     setError(null);
     beginProcessing();
+    // HEIC のデコード(heic2any)はメインスレッドをブロックするため、
+    // 「処理中...」のペイントが先に走るよう一旦ブラウザに yield する
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     try {
       const normalized = await normalizeImageFile(file);
       const url = await fileToDataURL(normalized);
       onPick(url);
+      sendGAEvent('event', 'photo_set', { month });
     } catch (err) {
       console.error(err);
       setError('写真を読み込めませんでした。別の画像でお試しください。');

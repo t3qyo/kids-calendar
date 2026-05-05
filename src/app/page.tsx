@@ -1,9 +1,11 @@
 import { CalendarPreview } from '@/components/CalendarPreview';
+import { ClearAllButton } from '@/components/ClearAllButton';
 import { DigitUploader } from '@/components/DigitUploader';
 import { ExportButtons } from '@/components/ExportButtons';
 import { ExportRenderArea } from '@/components/ExportRenderArea';
 import { LayoutSelector } from '@/components/LayoutSelector';
 import { MonthPhotoUploader } from '@/components/MonthPhotoUploader';
+import { PaperSizeSelector } from '@/components/PaperSizeSelector';
 import { ReloadWarning } from '@/components/ReloadWarning';
 import { StartMonthSelector } from '@/components/StartMonthSelector';
 
@@ -13,14 +15,17 @@ export default function Home() {
       <ReloadWarning />
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Kids Calendar Maker
+          てがき数字カレンダーメーカー
         </h1>
         <p className="text-sm text-gray-600">
           子供の写真と手書きの数字で、世界に一つだけのオリジナルカレンダーをつくれます。
         </p>
-        <p className="text-xs text-amber-700">
-          ※ アップロードした写真や数字はブラウザを閉じる/リロードすると消えます。
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <p className="text-xs text-gray-500">
+            編集内容はこのブラウザに自動保存されます。別の端末・別のブラウザでは引き継がれません。
+          </p>
+          <ClearAllButton />
+        </div>
       </header>
 
       <Section step="1" title="開始月を選ぶ" description="開始月から12ヶ月分のカレンダーを作成します。">
@@ -52,9 +57,15 @@ export default function Home() {
       </Section>
 
       <Section step="6" title="出力">
-        <ExportButtons />
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-sm text-gray-600">印刷用紙</p>
+            <PaperSizeSelector />
+          </div>
+          <ExportButtons />
+        </div>
         <p className="mt-2 text-xs text-gray-500">
-          ※ PDFは12ヶ月分が1ファイルに収まります。印刷時はサイズに合わせた用紙設定でどうぞ。
+          ※ PDFは12ヶ月分が1ファイルに収まります。
         </p>
       </Section>
 

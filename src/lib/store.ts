@@ -33,9 +33,11 @@ type Actions = {
   reset: () => void;
 };
 
+const now = new Date();
+
 const initialState: State = {
-  startYear: 2026,
-  startMonth: 1,
+  startYear: now.getFullYear(),
+  startMonth: now.getMonth() + 1,
   layout: 'wall',
   paperSize: 'a4',
   monthPhotos: {},

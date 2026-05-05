@@ -11,6 +11,9 @@ export const en: Messages = {
       "Your edits are auto-saved in this browser. They won't carry over to other devices or browsers.",
     sampleCaption: 'Here is an example of the output',
   },
+  footer: {
+    madeBy: 'Made by',
+  },
   clearAll: {
     button: 'Clear all',
     confirm: 'This will clear all your edits. Are you sure?',

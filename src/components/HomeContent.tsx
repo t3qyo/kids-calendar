@@ -77,6 +77,18 @@ export function HomeContent() {
       </Section>
 
       <ExportRenderArea />
+
+      <footer className="pb-4 text-center text-xs text-gray-400">
+        {t.footer.madeBy}{' '}
+        <a
+          href="https://x.com/t3qyo"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-gray-600 hover:underline"
+        >
+          @t3qyo
+        </a>
+      </footer>
     </main>
   );
 }

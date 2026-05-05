@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 import { CalendarPreview } from '@/components/CalendarPreview';
 import { ClearAllButton } from '@/components/ClearAllButton';
 import { DigitUploader } from '@/components/DigitUploader';
@@ -13,6 +15,17 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
       <ReloadWarning />
+      <div className="space-y-1">
+        <p className="text-xs text-gray-500">出力例はこんな感じです</p>
+        <Image
+          src="/sample.jpg"
+          alt="カレンダーサンプル"
+          width={3024}
+          height={3572}
+          className="w-40 rounded-lg shadow-md sm:w-48"
+        />
+      </div>
+
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           てがき数字カレンダーメーカー

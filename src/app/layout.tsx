@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Caveat, Klee_One } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { LocaleProvider } from "@/lib/i18n";
 import "./globals.css";
 
 const GA_MEASUREMENT_ID = "G-XW06EDZ229";
@@ -63,7 +64,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${caveat.variable} ${kleeOne.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
-        {children}
+        <LocaleProvider>
+          {children}
+        </LocaleProvider>
         <Analytics />
       </body>
       <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />

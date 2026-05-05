@@ -7,6 +7,7 @@ import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile } from '@/lib/imageProcessing';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { DEFAULT_PHOTO_TRANSFORM } from '@/lib/types';
+import { useTranslations } from '@/lib/i18n';
 import { PhotoTransformEditor } from './PhotoTransformEditor';
 
 export function MonthPhotoUploader() {
@@ -62,6 +63,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
   const [error, setError] = useState<string | null>(null);
   const beginProcessing = useProcessingStore((s) => s.begin);
   const endProcessing = useProcessingStore((s) => s.end);
+  const t = useTranslations();
 
   const handleFile = async (file: File) => {
     setProcessing(true);
@@ -77,17 +79,19 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
       sendGAEvent('event', 'photo_set', { month });
     } catch (err) {
       console.error(err);
-      setError('写真を読み込めませんでした。別の画像でお試しください。');
+      setError(t.photoUploader.errorLoad);
     } finally {
       setProcessing(false);
       endProcessing();
     }
   };
 
+  const monthLabel = t.photoUploader.monthLabel(year, month);
+
   return (
     <div className="flex flex-col gap-1">
       <div className="text-xs font-medium text-gray-600">
-        {year}年{month}月
+        {monthLabel}
       </div>
       <div
         onDragOver={(e) => e.preventDefault()}
@@ -103,7 +107,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photo}
-              alt={`${year}年${month}月`}
+              alt={monthLabel}
               className="absolute inset-0 h-full w-full object-cover"
               style={{
                 objectPosition: `${transform.focusX}% ${transform.focusY}%`,
@@ -116,12 +120,12 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
               onClick={onEdit}
               className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-[11px] text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/70"
             >
-              範囲を調整
+              {t.photoUploader.adjustRange}
             </button>
           </>
         ) : processing ? (
           <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
-            処理中...
+            {t.photoUploader.processing}
           </span>
         ) : (
           <button
@@ -129,12 +133,12 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
             onClick={() => inputRef.current?.click()}
             className="absolute inset-0 flex items-center justify-center text-xs text-gray-400 hover:bg-gray-100"
           >
-            写真を選択
+            {t.photoUploader.selectPhoto}
           </button>
         )}
         {photo && processing && (
           <span className="absolute inset-0 flex items-center justify-center bg-white/70 text-xs text-gray-700">
-            処理中...
+            {t.photoUploader.processing}
           </span>
         )}
         <input
@@ -156,7 +160,7 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
             onClick={onEdit}
             className="text-gray-700 underline hover:text-gray-900"
           >
-            範囲調整
+            {t.photoUploader.adjustButton}
           </button>
           <div className="flex gap-2">
             <button
@@ -164,14 +168,14 @@ function MonthSlot({ year, month, photo, transform, onPick, onClear, onEdit }: S
               onClick={() => inputRef.current?.click()}
               className="text-gray-500 underline hover:text-gray-700"
             >
-              差替
+              {t.photoUploader.replace}
             </button>
             <button
               type="button"
               onClick={onClear}
               className="text-gray-500 underline hover:text-gray-700"
             >
-              クリア
+              {t.photoUploader.clear}
             </button>
           </div>
         </div>

@@ -1,17 +1,20 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from '@/lib/i18n';
 
 export default function NotFound() {
+  const t = useTranslations();
+
   return (
     <main className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
-      <h2 className="text-xl font-semibold">ページが見つかりません</h2>
-      <p className="text-sm text-gray-600">
-        お探しのページは存在しないか、削除された可能性があります。
-      </p>
+      <h2 className="text-xl font-semibold">{t.notFound.title}</h2>
+      <p className="text-sm text-gray-600">{t.notFound.description}</p>
       <Link
         href="/"
         className="rounded bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-800"
       >
-        トップに戻る
+        {t.notFound.backToTop}
       </Link>
     </main>
   );

@@ -2,6 +2,7 @@
 
 import { useCalendarStore } from '@/lib/store';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
+import { useTranslations } from '@/lib/i18n';
 
 const YEAR_RANGE = 5;
 
@@ -10,6 +11,7 @@ export function StartMonthSelector() {
   const startMonth = useCalendarStore((s) => s.startMonth);
   const setStartYear = useCalendarStore((s) => s.setStartYear);
   const setStartMonth = useCalendarStore((s) => s.setStartMonth);
+  const t = useTranslations();
 
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
@@ -23,7 +25,7 @@ export function StartMonthSelector() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-2 text-sm">
-          <span className="text-gray-600">開始年</span>
+          <span className="text-gray-600">{t.startMonth.startYearLabel}</span>
           <select
             value={startYear}
             onChange={(e) => setStartYear(Number(e.target.value))}
@@ -31,13 +33,13 @@ export function StartMonthSelector() {
           >
             {years.map((y) => (
               <option key={y} value={y}>
-                {y}年
+                {t.startMonth.yearOption(y)}
               </option>
             ))}
           </select>
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <span className="text-gray-600">開始月</span>
+          <span className="text-gray-600">{t.startMonth.startMonthLabel}</span>
           <select
             value={startMonth}
             onChange={(e) => setStartMonth(Number(e.target.value))}
@@ -45,14 +47,14 @@ export function StartMonthSelector() {
           >
             {months.map((m) => (
               <option key={m} value={m}>
-                {m}月
+                {t.startMonth.monthOption(m)}
               </option>
             ))}
           </select>
         </label>
       </div>
       <p className="text-xs text-gray-500">
-        {startYear}年{startMonth}月 から {last.year}年{last.month}月 までの12ヶ月分のカレンダーを作ります。
+        {t.startMonth.rangeInfo(startYear, startMonth, last.year, last.month)}
       </p>
     </div>
   );

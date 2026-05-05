@@ -105,7 +105,7 @@ export function ExportButtons() {
           }
           const imgData = canvas.toDataURL('image/jpeg', 0.92);
           const { x, y } = cardPositions[slot];
-          pdf.addImage(imgData, 'JPEG', x, y, spec.widthMm, cardH, undefined, 'FAST');
+          pdf.addImage(imgData, 'JPEG', x, y, spec.widthMm, cardH, undefined, 'NONE');
           if (useA4) drawCropMarks(pdf, x, y, spec.widthMm, cardH);
         }
       }

@@ -6,6 +6,7 @@ import { useCalendarStore } from '@/lib/store';
 import { getTwelveMonthsFrom } from '@/lib/calendar';
 import { cropPhotoCached } from '@/lib/imageProcessing';
 import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
+import { useTranslations } from '@/lib/i18n';
 import { LAYOUT_SPECS, getTotalHeightMm } from './CalendarPage';
 
 const A4_WIDTH_MM = 210;
@@ -32,6 +33,7 @@ export function ExportButtons() {
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations();
 
   const months = getTwelveMonthsFrom(startYear, startMonth);
   const fileBase = `kids-calendar-${startYear}-${String(startMonth).padStart(2, '0')}`;
@@ -123,7 +125,7 @@ export function ExportButtons() {
       trackPdfFirstExportOnce();
     } catch (err) {
       console.error(err);
-      setError('PDFの書き出しに失敗しました。再度お試しください。');
+      setError(t.export.errorPdf);
     } finally {
       setExporting(false);
       setProgress(null);
@@ -150,7 +152,7 @@ export function ExportButtons() {
       sendGAEvent('event', 'export_png', { layout, paper_size: paperSize });
     } catch (err) {
       console.error(err);
-      setError('PNGの書き出しに失敗しました。再度お試しください。');
+      setError(t.export.errorPng);
     } finally {
       setExporting(false);
       setProgress(null);
@@ -168,7 +170,7 @@ export function ExportButtons() {
           disabled={exporting}
           className="rounded bg-gray-900 px-4 py-2 text-sm text-white shadow hover:bg-gray-800 disabled:opacity-50"
         >
-          PDFで出力（12ヶ月）
+          {t.export.pdfButton}
         </button>
         <button
           type="button"
@@ -176,11 +178,11 @@ export function ExportButtons() {
           disabled={exporting}
           className="rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100 disabled:opacity-50"
         >
-          PNGで個別ダウンロード
+          {t.export.pngButton}
         </button>
         {progress && (
           <span className="text-sm text-gray-600">
-            書き出し中 {progress.current} / {progress.total}
+            {t.export.exporting(progress.current, progress.total)}
           </span>
         )}
       </div>
@@ -263,28 +265,30 @@ function PrintHint({
   clipMarginMm: number;
   clipSide?: 'top' | 'bottom';
 }) {
+  const t = useTranslations();
+  const ph = t.export.printHint;
+
   const items: string[] = [];
   if (paperSize === 'a4') {
-    items.push('用紙: A4 / 倍率: 100% (実際のサイズ・原寸大)');
+    items.push(ph.paperA4);
     if (twoUp) {
-      items.push('A4 1 枚に 2 ヶ月分が縦並びで配置されます (計 6 枚)');
+      items.push(ph.twoUp);
     }
-    items.push('印刷後、各カードの四隅のトンボ (切り取り線) に沿って切り抜く');
+    items.push(ph.cropAfterPrint);
   } else {
-    items.push('用紙: PDF と同じサイズ / 倍率: 100% (実際のサイズ・原寸大)');
+    items.push(ph.paperExact);
   }
-  if (clipMarginMm > 0) {
-    const where = clipSide === 'top' ? '上' : '下';
-    items.push(`カード${where}側に約 ${clipMarginMm}mm の余白あり (留め具・スタンド取付用)`);
+  if (clipMarginMm > 0 && clipSide) {
+    items.push(ph.clipMargin(clipMarginMm, clipSide));
   }
   if (doubleSided) {
-    items.push('両面印刷: 長辺とじ');
-    items.push('印刷後、用紙の上端を綴じる (パンチ穴 + 紐 / クリップなど)');
-    items.push('下端からめくると、裏面に翌月が正しい向きで現れます');
+    items.push(ph.doubleSided);
+    items.push(ph.bindTop);
+    items.push(ph.flipInstruction);
   }
   return (
     <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-      <p className="font-medium">印刷設定</p>
+      <p className="font-medium">{ph.title}</p>
       <ul className="mt-1 list-disc pl-4 space-y-0.5">
         {items.map((it) => (
           <li key={it}>{it}</li>

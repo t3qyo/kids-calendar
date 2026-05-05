@@ -1,7 +1,7 @@
 'use client';
 
 import { useCalendarStore } from '@/lib/store';
-import { LAYOUT_SPECS } from './CalendarPage';
+import { useTranslations } from '@/lib/i18n';
 import type { LayoutType } from '@/lib/types';
 
 const LAYOUTS: LayoutType[] = ['wall', 'desk-horizontal'];
@@ -9,11 +9,16 @@ const LAYOUTS: LayoutType[] = ['wall', 'desk-horizontal'];
 export function LayoutSelector() {
   const layout = useCalendarStore((s) => s.layout);
   const setLayout = useCalendarStore((s) => s.setLayout);
+  const t = useTranslations();
+
+  const layoutLabel: Record<LayoutType, string> = {
+    wall: t.layout.wall,
+    'desk-horizontal': t.layout.deskHorizontal,
+  };
 
   return (
     <div className="flex flex-wrap gap-2">
       {LAYOUTS.map((l) => {
-        const spec = LAYOUT_SPECS[l];
         const active = layout === l;
         return (
           <button
@@ -26,7 +31,7 @@ export function LayoutSelector() {
                 : 'border-gray-300 bg-white hover:bg-gray-100'
             }`}
           >
-            {spec.label}
+            {layoutLabel[l]}
           </button>
         );
       })}

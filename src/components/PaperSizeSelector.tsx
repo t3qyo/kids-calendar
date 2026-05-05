@@ -3,30 +3,32 @@
 import { sendGAEvent } from '@next/third-parties/google';
 import { useCalendarStore } from '@/lib/store';
 import type { PaperSize } from '@/lib/types';
+import { useTranslations } from '@/lib/i18n';
 import { LAYOUT_SPECS, getTotalHeightMm } from './CalendarPage';
-
-const OPTIONS: { value: PaperSize; label: string; description: string }[] = [
-  {
-    value: 'a4',
-    label: 'A4 にそのまま印刷 (推奨)',
-    description: '家庭プリンタ・コンビニ複合機で印刷。トンボ (切り取り線) に沿って後から切り抜きます。',
-  },
-  {
-    value: 'exact',
-    label: '実寸の用紙に印刷',
-    description: 'カレンダーと同じサイズの用紙を用意して印刷します。業者印刷向け。',
-  },
-];
 
 export function PaperSizeSelector() {
   const layout = useCalendarStore((s) => s.layout);
   const paperSize = useCalendarStore((s) => s.paperSize);
   const setPaperSize = useCalendarStore((s) => s.setPaperSize);
   const spec = LAYOUT_SPECS[layout];
+  const t = useTranslations();
+
+  const options: { value: PaperSize; label: string; description: string }[] = [
+    {
+      value: 'a4',
+      label: t.paperSize.a4Label,
+      description: t.paperSize.a4Description,
+    },
+    {
+      value: 'exact',
+      label: t.paperSize.exactLabel,
+      description: t.paperSize.exactDescription,
+    },
+  ];
 
   return (
     <div className="space-y-2">
-      {OPTIONS.map((opt) => {
+      {options.map((opt) => {
         const active = paperSize === opt.value;
         const exactLabel =
           opt.value === 'exact'

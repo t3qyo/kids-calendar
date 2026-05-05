@@ -1,6 +1,7 @@
 'use client';
 
 import { useCalendarStore } from '@/lib/store';
+import { useTranslations } from '@/lib/i18n';
 
 export function ClearAllButton() {
   const reset = useCalendarStore((s) => s.reset);
@@ -10,9 +11,10 @@ export function ClearAllButton() {
       Object.keys(s.digitImages).length > 0 ||
       Object.keys(s.photoTransforms).length > 0,
   );
+  const t = useTranslations();
 
   const handleClick = () => {
-    if (!confirm('編集内容をすべてクリアします。よろしいですか？')) return;
+    if (!confirm(t.clearAll.confirm)) return;
     reset();
   };
 
@@ -23,7 +25,7 @@ export function ClearAllButton() {
       disabled={!hasContent}
       className="rounded border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
     >
-      編集内容をすべてクリア
+      {t.clearAll.button}
     </button>
   );
 }

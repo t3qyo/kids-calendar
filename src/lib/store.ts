@@ -127,6 +127,19 @@ export const useCalendarStore = create<State & Actions>()(
       name: 'kids-calendar-store',
       version: 1,
       storage: createJSONStorage(() => indexedDbStorage),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const today = new Date();
+        const isStaleDefault =
+          state.startYear !== today.getFullYear() || state.startMonth !== today.getMonth() + 1;
+        const hasNoUserData =
+          Object.keys(state.monthPhotos).length === 0 &&
+          Object.keys(state.digitImages).length === 0;
+        if (isStaleDefault && hasNoUserData) {
+          useCalendarStore.setState(initialState);
+          idbDel('kids-calendar-store').catch(() => {});
+        }
+      },
       partialize: (state) => ({
         startYear: state.startYear,
         startMonth: state.startMonth,

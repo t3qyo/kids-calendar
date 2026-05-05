@@ -2,6 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LocaleProvider, useLocale, useSetLocale } from './index';
+import { ja } from './ja';
+import { en } from './en';
+
+// ネストされたオブジェクトを再帰的に走査し、リーフノードのドット区切りキー一覧を返す。
+// 文字列・関数はリーフ、オブジェクトは再帰的に展開する。
+function collectLeafKeys(obj: unknown, prefix = ''): string[] {
+  if (typeof obj === 'object' && obj !== null) {
+    return Object.entries(obj as Record<string, unknown>).flatMap(([key, val]) =>
+      collectLeafKeys(val, prefix ? `${prefix}.${key}` : key),
+    );
+  }
+  return [prefix];
+}
 
 const LOCALE_STORAGE_KEY = 'kids-calendar-locale';
 
@@ -37,6 +50,14 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+describe('翻訳カバレッジ', () => {
+  it('ja と en のキーが完全に一致する', () => {
+    const jaKeys = collectLeafKeys(ja).sort();
+    const enKeys = collectLeafKeys(en).sort();
+    expect(enKeys).toEqual(jaKeys);
+  });
 });
 
 describe('LocaleProvider / detectLocale', () => {

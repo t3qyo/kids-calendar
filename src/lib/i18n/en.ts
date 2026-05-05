@@ -9,6 +9,7 @@ export const en: Messages = {
   header: {
     autosave:
       "Your edits are auto-saved in this browser. They won't carry over to other devices or browsers.",
+    sampleCaption: 'Here is an example of the output',
   },
   clearAll: {
     button: 'Clear all',

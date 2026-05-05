@@ -9,6 +9,7 @@ export const ja: Messages = {
   header: {
     autosave:
       '編集内容はこのブラウザに自動保存されます。別の端末・別のブラウザでは引き継がれません。',
+    sampleCaption: '出力例はこんな感じです',
   },
   clearAll: {
     button: '編集内容をすべてクリア',

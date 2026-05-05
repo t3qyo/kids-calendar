@@ -13,6 +13,7 @@ export type Messages = {
   };
   header: {
     autosave: string;
+    sampleCaption: string;
   };
   clearAll: {
     button: string;

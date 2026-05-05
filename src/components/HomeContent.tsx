@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { CalendarPreview } from '@/components/CalendarPreview';
 import { ClearAllButton } from '@/components/ClearAllButton';
 import { DigitUploader } from '@/components/DigitUploader';
@@ -20,6 +22,16 @@ export function HomeContent() {
     <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
       <ReloadWarning />
       <header className="space-y-2">
+        <div className="space-y-1">
+          <p className="text-xs text-gray-500">{t.header.sampleCaption}</p>
+          <Image
+            src="/sample.jpg"
+            alt={t.header.sampleCaption}
+            width={3024}
+            height={3572}
+            className="w-40 rounded-lg shadow-md sm:w-48"
+          />
+        </div>
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {t.site.title}

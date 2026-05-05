@@ -21,7 +21,7 @@ export function HomeContent() {
   return (
     <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:px-6">
       <ReloadWarning />
-      <header className="space-y-2">
+      <header className="space-y-6">
         <div className="space-y-1">
           <p className="text-xs text-gray-500">{t.header.sampleCaption}</p>
           <Image

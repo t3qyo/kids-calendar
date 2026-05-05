@@ -5,6 +5,7 @@ import { buildMonthGrid, WEEKDAYS } from '@/lib/calendar';
 import { cropPhotoCached, getCachedCrop } from '@/lib/imageProcessing';
 import type { LayoutType, PhotoTransform } from '@/lib/types';
 import { DEFAULT_PHOTO_TRANSFORM, PHOTO_ASPECT } from '@/lib/types';
+import { useTranslations } from '@/lib/i18n';
 import { DateNumber } from './DateNumber';
 
 export type LayoutSpec = {
@@ -130,10 +131,11 @@ function PhotoBox({
   transform: PhotoTransform;
   className?: string;
 }) {
+  const t = useTranslations();
   if (!photo) {
     return (
       <div className={`flex items-center justify-center bg-gray-100 text-xs text-gray-400 ${className ?? ''}`}>
-        写真未設定
+        {t.calendar.noPhoto}
       </div>
     );
   }

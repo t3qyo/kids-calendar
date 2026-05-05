@@ -12,10 +12,11 @@ afterEach(() => {
 });
 
 describe('useCalendarStore - 初期状態', () => {
-  it('startYear=2026, startMonth=1, layout=wall', () => {
+  it('startYear・startMonth が今月、layout=wall', () => {
+    const now = new Date();
     const s = useCalendarStore.getState();
-    expect(s.startYear).toBe(2026);
-    expect(s.startMonth).toBe(1);
+    expect(s.startYear).toBe(now.getFullYear());
+    expect(s.startMonth).toBe(now.getMonth() + 1);
     expect(s.layout).toBe('wall');
     expect(s.monthPhotos).toEqual({});
     expect(s.photoTransforms).toEqual({});
@@ -118,6 +119,7 @@ describe('setStartYear / setStartMonth / setLayout', () => {
 
 describe('reset', () => {
   it('変更後に reset すると initial state に戻る', () => {
+    const now = new Date();
     useCalendarStore.getState().setMonthPhoto(1, 'data:1');
     useCalendarStore.getState().setDigitImage(0, 'data:0');
     useCalendarStore.getState().setLayout('desk-horizontal');
@@ -125,8 +127,8 @@ describe('reset', () => {
 
     useCalendarStore.getState().reset();
     const s = useCalendarStore.getState();
-    expect(s.startYear).toBe(2026);
-    expect(s.startMonth).toBe(1);
+    expect(s.startYear).toBe(now.getFullYear());
+    expect(s.startMonth).toBe(now.getMonth() + 1);
     expect(s.layout).toBe('wall');
     expect(s.monthPhotos).toEqual({});
     expect(s.photoTransforms).toEqual({});

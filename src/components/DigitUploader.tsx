@@ -5,12 +5,14 @@ import { sendGAEvent } from '@next/third-parties/google';
 import { useCalendarStore } from '@/lib/store';
 import { useProcessingStore } from '@/lib/processingStore';
 import { fileToDataURL, normalizeImageFile, removeWhiteBackground } from '@/lib/imageProcessing';
+import { useTranslations } from '@/lib/i18n';
 
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 export function DigitUploader() {
   const digitImages = useCalendarStore((s) => s.digitImages);
   const setDigitImage = useCalendarStore((s) => s.setDigitImage);
+  const t = useTranslations();
 
   return (
     <div className="space-y-3">
@@ -25,9 +27,7 @@ export function DigitUploader() {
           />
         ))}
       </div>
-      <p className="text-xs text-gray-500">
-        白い紙にマジックなどで書いた0〜9の数字を撮影してアップロードしてください。白背景は自動で透過処理されます。
-      </p>
+      <p className="text-xs text-gray-500">{t.digitUploader.hint}</p>
     </div>
   );
 }
@@ -48,6 +48,7 @@ function DigitSlot({
   const [error, setError] = useState<string | null>(null);
   const beginProcessing = useProcessingStore((s) => s.begin);
   const endProcessing = useProcessingStore((s) => s.end);
+  const t = useTranslations();
 
   const handleFile = async (file: File) => {
     setProcessing(true);
@@ -64,7 +65,7 @@ function DigitSlot({
       sendGAEvent('event', 'digit_set', { digit });
     } catch (err) {
       console.error(err);
-      setError('数字を読み込めませんでした。別の画像でお試しください。');
+      setError(t.digitUploader.errorLoad);
     } finally {
       setProcessing(false);
       endProcessing();
@@ -83,9 +84,9 @@ function DigitSlot({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt={`${digit}`} className="h-full w-full object-contain p-1" />
         ) : processing ? (
-          <span>処理中...</span>
+          <span>{t.digitUploader.processing}</span>
         ) : (
-          <span>写真</span>
+          <span>{t.digitUploader.photo}</span>
         )}
         <input
           ref={inputRef}
@@ -105,7 +106,7 @@ function DigitSlot({
           onClick={onClear}
           className="text-center text-xs text-gray-500 underline hover:text-gray-700"
         >
-          消す
+          {t.digitUploader.clear}
         </button>
       )}
       <p role="alert" aria-live="polite" className="text-center text-[10px] text-red-600 empty:hidden">

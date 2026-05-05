@@ -116,8 +116,11 @@ const LocaleContext = createContext<LocaleContextValue>({
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('ja');
 
-  // クライアント側でロケールを検出して初期化
+  // クライアント側でロケールを検出して初期化。
+  // SSR との hydration ミスマッチを避けるため useEffect で更新する必要があり、
+  // 同期 setState だが初回マウント時の一度だけなので意図的に許容する。
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocaleState(detectLocale());
   }, []);
 

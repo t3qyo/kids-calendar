@@ -78,7 +78,7 @@ export function HomeContent() {
 
       <ExportRenderArea />
 
-      <footer className="pb-4 text-center text-xs text-gray-400">
+      <footer className="pb-4 text-center text-sm text-gray-500">
         {t.footer.madeBy}{' '}
         <a
           href="https://x.com/t3qyo"

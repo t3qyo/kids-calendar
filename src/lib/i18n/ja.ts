@@ -12,7 +12,7 @@ export const ja: Messages = {
     sampleCaption: '出力例はこんな感じです',
   },
   footer: {
-    madeBy: '作者',
+    madeBy: 'ご要望はこちらまで',
   },
   clearAll: {
     button: '編集内容をすべてクリア',

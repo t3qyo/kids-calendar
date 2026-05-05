@@ -12,7 +12,7 @@ export const en: Messages = {
     sampleCaption: 'Here is an example of the output',
   },
   footer: {
-    madeBy: 'Made by',
+    madeBy: 'Send requests to',
   },
   clearAll: {
     button: 'Clear all',

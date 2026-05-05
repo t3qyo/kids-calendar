@@ -11,6 +11,9 @@ export const ja: Messages = {
       '編集内容はこのブラウザに自動保存されます。別の端末・別のブラウザでは引き継がれません。',
     sampleCaption: '出力例はこんな感じです',
   },
+  footer: {
+    madeBy: '作者',
+  },
   clearAll: {
     button: '編集内容をすべてクリア',
     confirm: '編集内容をすべてクリアします。よろしいですか？',

@@ -15,6 +15,9 @@ export type Messages = {
     autosave: string;
     sampleCaption: string;
   };
+  footer: {
+    madeBy: string;
+  };
   clearAll: {
     button: string;
     confirm: string;
